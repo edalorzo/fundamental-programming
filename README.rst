@@ -337,7 +337,7 @@ We can understand a few exceptions to doing input checks on parameters when it c
 
 In the code above I could understand an omission of a validation on the ``accountRepository`` argument, because we're using Spring to inject a value here and the ``Autowrired`` annotation already requires that a value is passed here or an exception will be thrown during the application initialization. Obviously adding a nullability check wouldn't do any harm here and I would say it is required if the class is expected to be instantiated outside the Spring container for other purposes. However, if it is intended only to be used withing the Spring container, I would omit the validation since I know the container would do the corresponding nullability checks here when it starts.
 
-However, you may still want to validate that injected values make sense, particularly if they come from configuration files that can be wrongfully edited.
+However, you may still want to validate that certain injected values are correct, particularly if they come from configuration files that can be wrongfully edited. For example:
 
 .. code-block:: java
 
@@ -353,18 +353,146 @@ However, you may still want to validate that injected values make sense, particu
    return retryTemplate;
  }
 
-In the example above, we know Spring guarantees the value of ``retryAttempts`` must be defined, but the value received might still be wrongfully defined. So an additional check here is never superfluous in my opinion.
+In the example above, we know Spring guarantees the value of ``retryAttempts`` must be defined, but the value received might still be wrongfully defined in a configuration file. So an additional check here is never superfluous in my opinion.
 
 Once more, the principle here is not to trust any external sources of data.
+
+
+Strive for Immutability
+-----------------------
+
+The `benefits of immutability <http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html>`_ are well known:
+
+* Thread safety.
+* Avoid temporal decoupling.
+* Avoid side effects.
+* Avoid identity mutability.
+* Failure atomicity
+
+A place where I believe we can always strive to use immutable objects is in our definition of our `data transfer objects <https://martinfowler.com/eaaCatalog/dataTransferObject.html>`_ (aka DTOs). Since DTOs transport data beyond the boundaries of our applications I daresay there's rarely a case in which we could say it is justifiable that we need to modify the state of such objects while using them.
+
+.. code-block:: java
+
+ public class SaveMoney {
+
+    private final AccountNumber accountNumber;
+    private final double amount;
+
+    @JsonCreator
+    public SaveMoney(@JsonProperty("accountNumber") AccountNumber accountNumber,
+                     @JsonProperty("amount") double amount) {
+
+        Objects.requireNonNull(accountNumber, "The account number must not be null");
+        if(amount <= 0) {
+            throw new IllegalArgumentException("The amount must be > 0: " + amount);
+        }
+        this.accountNumber = accountNumber;
+        this.amount = amount;
+    }
+
+    public AccountNumber getAccountNumber() {
+        return accountNumber;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    //...
+ }
+
+Note: The annotations ``@JsonCreator``, and ``@JsonProperty`` are part of the Jackson annotations library and they are used by this library to decide how to serialize an Java object into a JSON string and deserialize it back into Java object. Since the class has not setter methods, the ``@JsonCreator`` annotation states which constructor must be used during deserialization, and ``@JsonProperty`` simply maps JSON property fields to the corresponding arguments of the constructor.
+
+Another place where immutability can also be easily exploited is in the definition of `Value Objects <https://martinfowler.com/eaaCatalog/valueObject.html>`_. Every business domain has a set of business value objects that are highly reusable. For example, in our banking application example, instead of defining a bank account number as a String, we define a value object to represent it and encapsula some validation with it. The advantange of value objects is that they pull their own semantic weight.
+
+.. code-block:: java
+
+ public class AccountNumber {
+
+    //favor immutability
+    private final String number;
+
+    @JsonCreator
+    public AccountNumber(String number) {
+        Objects.requireNonNull(number, "The account number must not be null");
+        if(!number.matches("\\d-\\d{3}-\\d{3}-\\d{3}")) {
+            throw new IllegalArgumentException("Invalid savings account number format: " + number);
+        }
+        this.number = number;
+    }
+
+    @JsonValue
+    public String getNumber() {
+        return number;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AccountNumber that = (AccountNumber) o;
+
+        return number.equals(that.number);
+    }
+
+    @Override
+    public int hashCode() {
+        return number.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return this.number;
+    }
+ }
+
+Note: the use of the ``@Json`` value annotation is fundamental here. Without it a ``AccountNumber("1-234-567-890")`` would be serialized as `{number: "1-234-567-890"}` instead of just ``"1-234-567-890"``. This latter is the way a value object should be serialized though.
+
+Use Java 8 Optional When Possible
+---------------------------------
+
+A proper use of Java 8 Optional can alleviate a lot of mistakes related to null references. For example, in the following code the developer makes the mistake of not checking whether the reference returned by the method is null or not:
+
+.. code-block:: java
+
+ @Override
+ public double withdrawMoney(WithdrawMoney withdrawal) {
+    Objects.requireNonNull(withdrawal, "The withdrawal request must not be null");
+    BankAccount account = accountRepository.findAccountByNumber(withdrawal.getAccountNumber());
+    account.withdrawMoney(withdrawal.getAmount()); //Uh oh! account may be null
+ }
+
+However, if we change our repository method to return a Java 8 Optional object, it makes it harder for the developer to use the returned value without having to recognize the possibility that the optional is empty and it this case the developer does addresses the particular scenario by throwing an exception, something it was overlooked in the previous snippet.
+
+.. code-block:: java
+
+ @Override
+ public double withdrawMoney(WithdrawMoney withdrawal) {
+    Objects.requireNonNull(withdrawal, "The withdrawal request must not be null");
+    return accountRepository.findAccountByNumber(withdrawal.getAccountNumber())
+                            .map(account -> account.withdrawMoney(withdrawal.getAmount()))
+                            .orElseThrow(() -> new BankAccountNotFoundException(withdrawal.getAccountNumber()));
+ }
+
+Spring Controller Barricade
+---------------------------
+
+
 
 Further Reading
 ---------------
 
 * `Design By Contract`_
 * `Null References: The Billion Dollar Mistake <https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare>`_
+* `Objects Should Be Immutable`_
+* `Data Transfer Object`_
 * `Code Complete`_
 * `Effective Java`_
 
 .. _Code Complete: https://www.amazon.com/Code-Complete-Practical-Handbook-Construction/dp/0735619670
 .. _Effective Java: https://www.amazon.com/Effective-Java-3rd-Joshua-Bloch/dp/0134685997/
 .. _Design By Contract: https://www.cs.umd.edu/class/fall2002/cmsc214/Projects/P1/proj1.contract.html
+.. _Objects Should Be Immutable: http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html
+.. _Data Transfer Object: https://martinfowler.com/eaaCatalog/dataTransferObject.html
