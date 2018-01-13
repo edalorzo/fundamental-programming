@@ -33,7 +33,7 @@ public class SavingsAccount implements BankAccount {
 
     @Override
     public double withdrawMoney(double amount) {
-        if(amount < 0)
+        if(amount <= 0)
             throw new IllegalArgumentException("The amount must be >= 0: " + amount);
 
         if(balance < amount) {
@@ -48,7 +48,7 @@ public class SavingsAccount implements BankAccount {
 
     @Override
     public double saveMoney(double amount) {
-        if(amount < 0)
+        if(amount <= 0)
             throw new IllegalArgumentException("The amount must be >= 0: " + amount);
 
         balance += amount;
