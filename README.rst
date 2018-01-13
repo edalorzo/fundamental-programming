@@ -478,6 +478,8 @@ However, if we change our repository method to return a Java 8 Optional object, 
                             .orElseThrow(() -> new BankAccountNotFoundException(withdrawal.getAccountNumber()));
  }
 
+Beware, though, that using Optional objects improperly is also very easy. Make sure to read `Java SE 8 Optional, a pragmatic approach <http://blog.joda.org/2015/08/java-se-8-optional-pragmatic-approach.html>`_. You may also consider `this answer <https://stackoverflow.com/a/26328555/697630>`_ given by Brian Goetz (lead of Java 8 project at Oracle) in Stackoverflow on the subject of proper uses of optional objects. You may want to consider this `another answer <https://stackoverflow.com/a/18699418/697630>`_ in which I explain several things wrong with the use of optional.
+
 Spring Controller Barricade
 ---------------------------
 
