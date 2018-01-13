@@ -309,10 +309,53 @@ Once more `Code Complete`_ has great advice under Barricade Your Program to Cont
 
  Convert input data to the proper type at input time. Input typically arrives in the form of a string or number. Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto an enumerated type like ``Color_Red``, ``Color_Green``, and ``Color_Blue``. Carrying data of questionable type for any length of time in a program increases complexity and increases the chance that someone can crash your program by inputting a color like "Yes." Convert input data to the proper form as soon as possible after it's input.
 
-The principle here is not to trust any external sources of data, and from the perspective of methods any parameters passed to public and protected methods are considered external sources of data from the perspective of the class. Since classes are the building blocks of our systems, making them bullet proof will ensure our systems are more robust.
+The principle here is not to trust any external sources of data, and from the perspective of methods any parameters passed to public and protected methods are considered external sources of data from the perspective of the API designer vs the API implementor vs the API user. Since classes are the building blocks of our systems, making them bullet proof will ensure our systems are more robust.
 
 The barricade principle could be implemented at different levels of abstraction. For example, by validating the input parameters of public methods we create a barricade that protects private methods within a class, making it sure for private methods to use any parameters passed to them without having to re-validate them. The barricade could also be implemented in layered by means of validating user's input in the controller layer and making sure that any user's input is sanitized by the time it reaches the service layer.
 
+
+What About Dependency Injection?
+--------------------------------
+
+We can understand a few exceptions to doing input checks on parameters when it comes to arguments passed by injection of dependencies, for example
+
+.. code-block:: java
+
+ @Service
+ public class SavingsAccountService implements BankAccountService {
+
+    private final BankAccountRepository accountRepository;
+
+    @Autowired
+    public SavingsAccountService(BankAccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
+
+    //...
+ }
+
+
+In the code above I could understand an omission of a validation on the ``accountRepository`` argument, because we're using Spring to inject a value here and the ``Autowrired`` annotation already requires that a value is passed here or an exception will be thrown during the application initialization. Obviously adding a nullability check wouldn't do any harm here and I would say it is required if the class is expected to be instantiated outside the Spring container for other purposes. However, if it is intended only to be used withing the Spring container, I would omit the validation since I know the container would do the corresponding nullability checks here when it starts.
+
+However, you may still want to validate that injected values make sense, particularly if they come from configuration files that can be wrongfully edited.
+
+.. code-block:: java
+
+ @Bean
+ public RetryTemplate retryTemplate(@Value("${retryAttempts}" Integer retryAttempts) {
+   if(retryAttempts < 0)
+      throw new IllegalArgumentException("Invalid retryAttempts configuration: " + retryAttempts);
+
+   RetryTemplate retryTemplate = new RetryTemplate();
+   SimpleRetryPolicy policy = new SimpleRetryPolicy(3, singletonMap(TransientDataAccessException.class, true), true);
+   retryTemplate.setRetryPolicy(policy);
+
+   return retryTemplate;
+ }
+
+In the example above, we know Spring guarantees the value of ``retryAttempts`` must be defined, but the value received might still be wrongfully defined. So an additional check here is never superfluous in my opinion.
+
+Once more, the principle here is not to trust any external sources of data.
 
 Further Reading
 ---------------
