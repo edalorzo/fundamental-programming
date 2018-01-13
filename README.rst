@@ -403,7 +403,7 @@ A place where I believe we can always strive to use immutable objects is in our 
 
 Note: The annotations ``@JsonCreator``, and ``@JsonProperty`` are part of the Jackson annotations library and they are used by this library to decide how to serialize an Java object into a JSON string and deserialize it back into Java object. Since the class has not setter methods, the ``@JsonCreator`` annotation states which constructor must be used during deserialization, and ``@JsonProperty`` simply maps JSON property fields to the corresponding arguments of the constructor.
 
-Another place where immutability can also be easily exploited is in the definition of `Value Objects <https://martinfowler.com/eaaCatalog/valueObject.html>`_. Every business domain has a set of business value objects that are highly reusable. For example, in our banking application example, instead of defining a bank account number as a String, we define a value object to represent it and encapsula some validation with it. The advantange of value objects is that they pull their own semantic weight.
+Another place where immutability can also be easily exploited is in the definition of `Value Objects <https://martinfowler.com/eaaCatalog/valueObject.html>`_. Every business domain has a set of business value objects that are highly reusable. For example, in our banking application example, instead of defining a bank account number as a String, we define a value object to represent it and encapsulate some validation with it. The advantage of value objects is that they pull their own semantic weight at the same time that they properly validate constraints over the encapsulated value. And as a bonus advantage they are highly reusable.
 
 .. code-block:: java
 
@@ -448,7 +448,9 @@ Another place where immutability can also be easily exploited is in the definiti
     }
  }
 
-Note: the use of the ``@Json`` value annotation is fundamental here. Without it a ``AccountNumber("1-234-567-890")`` would be serialized as `{number: "1-234-567-890"}` instead of just ``"1-234-567-890"``. This latter is the way a value object should be serialized though.
+Note: the use of the ``@Json`` value annotation is fundamental here. Without it a ``AccountNumber("1-234-567-890")`` would be serialized as ``{number: "1-234-567-890"}`` instead of just ``"1-234-567-890"``. This latter is the way a value object should be serialized though.
+
+It is fundamental that value objects have proper implementations of ``equals``, ``hashCode`` and ``toString``. For a review of how to do this the right way I'd recommend a reading of related chapters in `Effective Java`_.
 
 Use Java 8 Optional When Possible
 ---------------------------------
