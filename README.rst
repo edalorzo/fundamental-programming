@@ -301,7 +301,7 @@ Once more `Code Complete`_ has great advice under Barricade Your Program to Cont
 
  One way to barricade for defensive programming purposes is to designate certain interfaces as boundaries to "safe" areas. Check data crossing the boundaries of a safe area for validity, and respond sensibly if the data isn't valid. Figure 8-2 illustrates this concept.
 
- .. image:: src/main/resources/images/validation-barricades.png
+ .. image:: src/main/resources/static/images/validation-barricades.png
 
  This same approach can be used at the class level. The class's public methods assume the data is unsafe, and they are responsible for checking the data and sanitizing it. Once the data has been accepted by the class's public methods, the class's private methods can assume the data is safe.
 
