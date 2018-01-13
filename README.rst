@@ -155,8 +155,8 @@ Once you have a contract properly defined you can **write tests to verify your c
 
 If you're following TDD style, you need not have implemented the ``SavingsAccount`` class and initially all tests would fail and gradually start passing as the methods are implemented properly one by one in the class.
 
-Classical Validation Errors
-----------------------------
+Beware of Constructor Parameters
+--------------------------------
 
 Perhaps the most classical example of this kind of thing is the failure to properly validate the nullability of a method argument, particularly when it happens in a constructor. For example, consider this class:
 
@@ -165,7 +165,7 @@ Perhaps the most classical example of this kind of thing is the failure to prope
  class Foo {
    private final Bar bar;
 
-   Foo(Bar bar) { this.bar = bar; } //Uh oh, no validation!
+   Foo(Bar bar) { this.bar = bar; } //Uh oh, no nullability checks!
    Bar getBar() { return this.bar; }
  }
 
@@ -188,7 +188,7 @@ And ``someOtherObj`` will store this ``foo`` instance for a while, waiting for s
 
 The problem here is that the spatial (where) and temporal (when) locations of the exception thrown here are very far away from the source of the problem (i.e. the constructor above). No wonder why Tony Hoare called his invention of null references `a billion dollars mistake <https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare>`_. However, this temporality and spatiality issue may happen with other forms of unvalidated data.
 
-To make matters worse, in a distributed system, the instance of ``Foo`` may have been even passed to other systems, and it could now be running in other machines, perhaps in totally different environments and even programming languages. So these type of problems can be infectious and propagate to other parts of our systems. Tracking the source of original failure in that case could be quite tricky.
+To make matters worse, in a distributed system, the instance of ``Foo`` may have been even serialized and passed to other systems, and it could now be running in other machines, perhaps in totally different environments and even programming languages. So these type of problems can be infectious and propagate to other parts of our systems. Tracking the source of original failure in that case could be quite tricky.
 
 So, the key insights here are:
 
@@ -239,6 +239,78 @@ The following quote from `Code Complete`_ highlights the main principle here:
  Check the values of all data from external sources. When getting data from a file, a user, the network, or some other external interface, check to be sure that the data falls within the allowable range. Make sure that numeric values are within tolerances and that strings are short enough to handle. If a string is intended to represent a restricted range of values (such as a financial transaction ID or something similar), be sure that the string is valid for its intended purpose; otherwise reject it. If you're working on a secure application, be especially leery of data that might attack your system: attempted buffer overflows, injected SQL commands, injected HTML or XML code, integer overflows, data passed to system calls, and so on.
 
  Check the values of all routine input parameters. Checking the values of routine input parameters is essentially the same as checking data that comes from an external source, except that the data comes from another routine instead of from an external interface.
+
+Validate Public and Protected Methods
+-------------------------------------
+
+An object's public and protected methods are its way to interact with the world. From the point of view of the API designer, any parameters passed by the API user cannot be trusted since the API users could easily make a mistake or have a bug in their code. Therefore the input provided by the API users cannot be trusted and therefore all public and protected methods *must* validate their input.
+
+The book `Effective Java`_ has a section dedicate to how to properly use exceptions (which I encourage everyone to read). The following is a valuable quote from that book:
+
+ Use runtime exceptions to indicate programming errors. The great majority of runtime exceptions indicate precondition violations. A precondition violation is simply a failure by the client of an API to adhere to the contract established by the API specification. For example, the contract for array access specifies that the array index must be between zero and the array length minus one. ``ArrayIndexOutOfBoundsException`` indicates that this precondition was violated.
+
+This implies validating all public and protected methods and constructors, particularly for data transport objects (i.e. DTOs).
+
+.. code-block:: java
+
+public class WithdrawMoney {
+
+    private AccountNumber accountNumber;
+    private double amount;
+
+    public WithdrawMoney(AccountNumber accountNumber, double amount) {
+
+        Objects.requireNonNull(accountNumber, "The account number must not be null");
+        if(amount <= 0) {
+            throw new IllegalArgumentException("The amount must be > 0: " + amount);
+        }
+
+        this.accountNumber = accountNumber;
+        this.amount = amount;
+    }
+
+    public AccountNumber getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(AccountNumber accountNumber) {
+        Objects.requireNonNull(accountNumber, "The account number must not be null");
+        this.accountNumber = accountNumber;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        if(amount <= 0) {
+            throw new IllegalArgumentException("The amount must be > 0: " + amount);
+        }
+        this.amount = amount;
+    }
+ }
+
+Since private methods are directly accessed from public or protected methods, then there is no need to do any validation there. If all public interfaces are checked to be valid then private methods can assume any parameters passed already satisfy required preconditions.
+Something similar could be said of package protected methods, since these can only be access from withing a given package, it is expected that they are under the controler of the API implementor and therefore
+the implementor has much more control of whether the data is valid within the confines of that package.
+
+The Barricade Principle
+-----------------------
+
+Once more `Code Complete`_ has great advice under Barricade Your Program to Contain the Damage Caused by Errors:
+
+ One way to barricade for defensive programming purposes is to designate certain interfaces as boundaries to "safe" areas. Check data crossing the boundaries of a safe area for validity, and respond sensibly if the data isn't valid. Figure 8-2 illustrates this concept.
+
+ .. image:: src/main/resources/images/validation-barricades.png
+
+ This same approach can be used at the class level. The class's public methods assume the data is unsafe, and they are responsible for checking the data and sanitizing it. Once the data has been accepted by the class's public methods, the class's private methods can assume the data is safe.
+
+ Another way of thinking about this approach is as an operating-room technique. Data is sterilized before it's allowed to enter the operating room. Anything that's in the operating room is assumed to be safe. The key design decision is deciding what to put in the operating room, what to keep out, and where to put the doors—which routines are considered to be inside the safety zone, which are outside, and which sanitize the data. The easiest way to do this is usually by sanitizing external data as it arrives, but data often needs to be sanitized at more than one level, so multiple levels of sterilization are sometimes required.
+
+ Convert input data to the proper type at input time. Input typically arrives in the form of a string or number. Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto an enumerated type like ``Color_Red``, ``Color_Green``, and ``Color_Blue``. Carrying data of questionable type for any length of time in a program increases complexity and increases the chance that someone can crash your program by inputting a color like "Yes." Convert input data to the proper form as soon as possible after it's input.
+
+The principle here is not to trust any external sources of data, and from the perspective of methods any parameters passed to public and protected methods are considered external sources of data from the perspective of the class. Since classes are the building blocks of our systems, making them bullet proof will ensure our systems are more robust.
+
 
 Further Reading
 ---------------
