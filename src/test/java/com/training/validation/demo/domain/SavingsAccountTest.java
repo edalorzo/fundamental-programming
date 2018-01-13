@@ -16,8 +16,11 @@ public class SavingsAccountTest {
 
     @Test
     public void saveMoney() {
+
         double balance = bankAccount.saveMoney(100);
         assertThat(balance).isEqualTo(100);
+        balance = bankAccount.saveMoney(75);
+        assertThat(balance).isEqualTo(175);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -36,9 +39,12 @@ public class SavingsAccountTest {
     public void withdrawMoney() {
         double balance = bankAccount.saveMoney(100);
         assertThat(balance).isEqualTo(100);
-
         balance = bankAccount.withdrawMoney(50);
         assertThat(balance).isEqualTo(50);
+        balance = bankAccount.withdrawMoney(25);
+        assertThat(balance).isEqualTo(25);
+        balance = bankAccount.withdrawMoney(25);
+        assertThat(balance).isEqualTo(0);
     }
 
     @Test(expected = IllegalArgumentException.class)

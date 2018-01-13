@@ -1,6 +1,9 @@
 Fundamental Programming Principles
 ==================================
 
+.. contents:: Table of Contents
+  :local:
+
 This project was intended as an exploration and demonstration of fundamental programming principles in the following areas:
 
 - Input Validation
@@ -107,6 +110,8 @@ Once you have a contract properly defined you can **write tests to verify your c
     public void saveMoney() {
         double balance = bankAccount.saveMoney(100);
         assertThat(balance).isEqualTo(100);
+        balance = bankAccount.saveMoney(75);
+        assertThat(balance).isEqualTo(175);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -125,7 +130,6 @@ Once you have a contract properly defined you can **write tests to verify your c
     public void withdrawMoney() {
         double balance = bankAccount.saveMoney(100);
         assertThat(balance).isEqualTo(100);
-
         balance = bankAccount.withdrawMoney(50);
         assertThat(balance).isEqualTo(50);
     }
@@ -150,6 +154,91 @@ Once you have a contract properly defined you can **write tests to verify your c
  }
 
 If you're following TDD style, you need not have implemented the ``SavingsAccount`` class and initially all tests would fail and gradually start passing as the methods are implemented properly one by one in the class.
+
+Classical Validation Errors
+----------------------------
+
+Perhaps the most classical example of this kind of thing is the failure to properly validate the nullability of a method argument, particularly when it happens in a constructor. For example, consider this class:
+
+.. code-block:: java
+
+ class Foo {
+   private final Bar bar;
+
+   Foo(Bar bar) { this.bar = bar; } //Uh oh, no validation!
+   Bar getBar() { return this.bar; }
+ }
+
+
+Then at **some other time** and **some other place**, **somebody else** does:
+
+.. code-block:: java
+
+  Bar bar = null;
+  Foo foo = new Foo(bar); //Uh oh, invalid data set
+  someOtherObj.passMeSomeFoo(foo);
+
+
+And ``someOtherObj`` will store this ``foo`` instance for a while, waiting for some event to happen **later** and when somebody does this and gets an unexpected failure:
+
+.. code-block:: java
+
+  foo.getBar().getName(); //NullPointerException
+
+
+The problem here is that the spatial (where) and temporal (when) locations of the exception thrown here are very far away from the source of the problem (i.e. the constructor above). No wonder why Tony Hoare called his invention of null references `a billion dollars mistake <https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare>`_. However, this temporality and spatiality issue may happen with other forms of unvalidated data.
+
+To make matters worse, in a distributed system, the instance of ``Foo`` may have been even passed to other systems, and it could now be running in other machines, perhaps in totally different environments and even programming languages. So these type of problems can be infectious and propagate to other parts of our systems. Tracking the source of original failure in that case could be quite tricky.
+
+So, the key insights here are:
+
+1. Fail as fast and as soon as possible.
+2. Avoid accepting invalid data at all costs (no garbage in).
+3. Above all, DTOs must be bullet proof since they traverse system boundaries and can be infectious.
+4. Failure to accept invalid data not only makes your system better, it also makes better clients.
+
+What Sort of Things Need Validation
+-----------------------------------
+
+- Nullability checks.
+- Domain business rules (e.g. an order must have payments)
+- Number constraints:
+
+  * What is the valid range of values in the number? (e.g. ``1 <= hour <= 12``)
+  * Can it be negative? (e.g. un-receive quantity)
+  * Can it be zero? (e.g. inventory stock)
+  * Can this number overflow or underflow? (e.g. ``Integer.MAX_VALUE + 1``)
+  * Is the number so big that it should be a ``BigInteger`` or ``BigDecimal``?
+  * If the number cannot be null, use primitive types.
+  * If the number can be stored in a database field, would it fit within the size of the corresponding database field
+
+- String constraints:
+
+  * Does the string must satisfy a specific pattern (i.e. regex)?.
+  * For other open strings, does the string have a maximum capacity?.
+  * If the string is going to be stored in a given database field, does the string fits in that field?.
+
+- Collection and arrays constraints:
+
+  * Collections must never be null, initialize them to empty collections
+  * Can the collection be empty (e.g. order items)
+  * Can any of the items in the collection be null?
+  * Can the collection be subject to unsafe publication?
+  * Can you expose the collection only through a read-only interface like ``Iterable``, ``Iterator`` or an unmodifiable collection?
+
+- Immutable Objects:
+
+  * Are there any getters doing unsafe publication of mutable members?
+
+- Mutable Objects:
+
+  * Can any getter exposing mutable objects allow to alter the valid semantics of internal data of the mutable object?
+
+The following quote from `Code Complete`_ highlights the main principle here:
+
+ Check the values of all data from external sources. When getting data from a file, a user, the network, or some other external interface, check to be sure that the data falls within the allowable range. Make sure that numeric values are within tolerances and that strings are short enough to handle. If a string is intended to represent a restricted range of values (such as a financial transaction ID or something similar), be sure that the string is valid for its intended purpose; otherwise reject it. If you're working on a secure application, be especially leery of data that might attack your system: attempted buffer overflows, injected SQL commands, injected HTML or XML code, integer overflows, data passed to system calls, and so on.
+
+ Check the values of all routine input parameters. Checking the values of routine input parameters is essentially the same as checking data that comes from an external source, except that the data comes from another routine instead of from an external interface.
 
 Further Reading
 ---------------
