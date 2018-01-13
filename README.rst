@@ -253,7 +253,7 @@ This implies validating all public and protected methods and constructors, parti
 
 .. code-block:: java
 
-public class WithdrawMoney {
+ public class WithdrawMoney {
 
     private AccountNumber accountNumber;
     private double amount;
@@ -310,6 +310,8 @@ Once more `Code Complete`_ has great advice under Barricade Your Program to Cont
  Convert input data to the proper type at input time. Input typically arrives in the form of a string or number. Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto an enumerated type like ``Color_Red``, ``Color_Green``, and ``Color_Blue``. Carrying data of questionable type for any length of time in a program increases complexity and increases the chance that someone can crash your program by inputting a color like "Yes." Convert input data to the proper form as soon as possible after it's input.
 
 The principle here is not to trust any external sources of data, and from the perspective of methods any parameters passed to public and protected methods are considered external sources of data from the perspective of the class. Since classes are the building blocks of our systems, making them bullet proof will ensure our systems are more robust.
+
+The barricade principle could be implemented at different levels of abstraction. For example, by validating the input parameters of public methods we create a barricade that protects private methods within a class, making it sure for private methods to use any parameters passed to them without having to re-validate them. The barricade could also be implemented in layered by means of validating user's input in the controller layer and making sure that any user's input is sanitized by the time it reaches the service layer.
 
 
 Further Reading
