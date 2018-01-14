@@ -890,7 +890,9 @@ The principle here is avoid checked exceptions and favor unchecked exceptions wh
 Retryability: Transient vs Persistent Exceptions
 ------------------------------------------------
 
-Some exceptions represent recoverable conditions (e.g. a ``QueryTimeoutException``) and some don't (e.g. ``DataViolationException``). When an exception condition is temporal, and we believe that if we try again we could probably succeed, we say that such exception is transient. On the other hand when the exceptional condition is permanent then we say such exception is persistent.
+Some exceptions represent recoverable conditions (e.g. a ``QueryTimeoutException``) and some don't (e.g. ``DataViolationException``).
+
+When an exception condition is temporal, and we believe that if we try again we could probably succeed, we say that such exception is transient. On the other hand, when the exceptional condition is permanent then we say such exception is persistent.
 
 The major point here is that transient exceptions are good candidates for retry blocks whereas persistent exceptions need to be handled differently, typically requiring some human intervention.
 
@@ -900,13 +902,13 @@ When we design an exception hierarchy based on a good understanding of the busin
 
 There are several strategies we could follow to indicate an exceptions is transient or not within our APIs:
 
-* We could define it as transient in the exception documentation (e.g. JavaDocs).
+* We could document that a given exception is transient (e.g. JavaDocs).
 * We could define a ``@TransientException`` annotation and add it to the exceptions.
 * We could define a marker interface or inherit from a ``TransientServiceException`` class.
 
 The Spring Framework follows the approach in the third option for its data access classes. All exceptions that inherit from `TransientDataAccessException`_ are considered transient and retryable in Spring.
 
-This plays rather well with the `Spring Retry`_ Framework. It becomes particularly simply to define a retry policy that retries any transient exceptions. Consider the following example:
+This plays rather well with the `Spring Retry`_ Framework. It becomes particularly simply to define a retry policy that retries any transient exceptions from the data access layer. Consider the following example:
 
 .. code-block:: java
 
@@ -919,7 +921,7 @@ This plays rather well with the `Spring Retry`_ Framework. It becomes particular
      SimpleRetryPolicy policy = new SimpleRetryPolicy(3, singletonMap(TransientDataAccessException.class, true), true);
      retryTemplate.setRetryPolicy(policy);
 
-     //dealing with transient exceptions locally by retrying
+     //dealing with transient exceptions locally by retrying up to 3 times
      return retryTemplate.execute(context -> {
          try {
              return accountRepository.findAccountByNumber(withdrawal.getAccountNumber())
@@ -927,7 +929,9 @@ This plays rather well with the `Spring Retry`_ Framework. It becomes particular
                                      .orElseThrow(() -> new BankAccountNotFoundException(withdrawal.getAccountNumber()));
          }
          catch (DataAccessException cause) {
-             throw new SavingsAccountException(withdrawal.getAccountNumber(), cause);
+            //we get here only for permanent exceptions
+            //or if we exhausted the 3 retry attempts.
+            throw new SavingsAccountException(withdrawal.getAccountNumber(), cause);
          }
      });
   }
