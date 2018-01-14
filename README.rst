@@ -32,12 +32,12 @@ There are two major principles that we must balance when designing and implement
 
   Consumer applications tend to favor robustness to correctness. Any result whatsoever is usually better than the software shutting down. The word processor I'm using occasionally displays a fraction of a line of text at the bottom of the screen. If it detects that condition, do I want the word processor to shut down? No. I know that the next time I hit Page Up or Page Down, the screen will refresh and the display will be back to normal.
 
-Balancing these two principles is vital while coding functions and methods.
+Balancing these two principles is vital while designing applications and coding software components.
 
 Design By Contract
 ------------------
 
-Functions or methods are the fundamental building blocks of any software application and we should strive to `design them by contract <https://www.cs.umd.edu/class/fall2002/cmsc214/Projects/P1/proj1.contract.html>`_. This implies that a method must guarantee all its preconditions. During the execution of the code must ensure its invariants are hold and finally, when finished, it must guarantee a number of postconditions. Failure to do any of this should be signaled immediately.
+Functions or methods are the fundamental building blocks of any software application and we should strive to `design them by contract <https://www.cs.umd.edu/class/fall2002/cmsc214/Projects/P1/proj1.contract.html>`_. This implies that a method must guarantee all its preconditions. During the execution of the code must ensure its invariants are hold and finally, when finished, it must guarantee a number of postconditions. Failure to do any of this should be signaled immediately by throwing an exception.
 
 * **Precondition**:  a condition that must be true of the parameters of a method and/or data members, if the method is to behave correctly, prior to running the code in the method.
 * **Postcondition**: a condition that is true after running the code in a method.
@@ -88,7 +88,7 @@ We typically document the contract in the interface method documentation. For ex
 
 The implementation class of this interface then must satisfy everything stated in the contract of its methods and our test classes must strive to satisfy those contracts.
 
-Consider another example: let's say you defining  a ``Fraction`` class to represent that mathematical concept. You may need to follow a contract with the following rules:
+Consider another example: let's say you are defining  a ``Fraction`` class to represent that mathematical concept. You may need to follow a contract with the following rules:
 
 * **Precondition**: the denominator must never be ``0``.
 * **Invariant**: fractions will be kept in reduced form (i.e. ``2/3`` instead of ``6/9``, ``6`` instead of ``6/1``, ``0`` instead of ``0/2``)
@@ -243,13 +243,13 @@ The following quote from `Code Complete`_ highlights the main principle here:
 Validate Public and Protected Methods
 -------------------------------------
 
-An object's public and protected methods are its way to interact with the world. From the point of view of the API designer, any parameters passed by the API user cannot be trusted since the API users could easily make a mistake or have a bug in their code. Therefore the input provided by the API users cannot be trusted and therefore all public and protected methods *must* validate their input.
+An object's public and protected methods are its way to interact with the world. From the point of view of the API designer, any parameters passed by the API user cannot be trusted since the API users could easily make a mistake or have a bug in their code. Therefore the input provided by the API users cannot be trusted and all public and protected methods *must* validate their input.
 
 The book `Effective Java`_ has a section dedicate to how to properly use exceptions (which I encourage everyone to read). The following is a valuable quote from that book:
 
  Use runtime exceptions to indicate programming errors. The great majority of runtime exceptions indicate precondition violations. A precondition violation is simply a failure by the client of an API to adhere to the contract established by the API specification. For example, the contract for array access specifies that the array index must be between zero and the array length minus one. ``ArrayIndexOutOfBoundsException`` indicates that this precondition was violated.
 
-This implies validating all public and protected methods and constructors, particularly for data transport objects (i.e. DTOs).
+This implies validating all public and protected methods and constructors. Consider this example of a data transport objects (DTO).
 
 .. code-block:: java
 
@@ -293,6 +293,8 @@ This implies validating all public and protected methods and constructors, parti
 Since private methods are directly accessed from public or protected methods, then there is no need to do any validation there. If all public interfaces are checked to be valid then private methods can assume any parameters passed already satisfy required preconditions.
 Something similar could be said of package protected methods, since these can only be access from withing a given package, it is expected that they are under the controler of the API implementor and therefore
 the implementor has much more control of whether the data is valid within the confines of that package.
+
+This idea is compatible with the barricade.
 
 The Barricade Principle
 -----------------------
@@ -401,7 +403,7 @@ A place where I believe we can always strive to use immutable objects is in our 
     //...
  }
 
-Note: The annotations ``@JsonCreator``, and ``@JsonProperty`` are part of the Jackson annotations library and they are used by this library to decide how to serialize an Java object into a JSON string and deserialize it back into Java object. Since the class has not setter methods, the ``@JsonCreator`` annotation states which constructor must be used during deserialization, and ``@JsonProperty`` simply maps JSON property fields to the corresponding arguments of the constructor.
+Note: The annotations ``@JsonCreator``, and ``@JsonProperty`` are part of the Jackson annotations library and they are used by this library to decide how to serialize a Java object into a JSON string and deserialize it back into a Java object. Since the class has no setter methods, the ``@JsonCreator`` annotation states which constructor must be used during deserialization, and ``@JsonProperty`` simply maps JSON property fields to the corresponding arguments of the constructor.
 
 Another place where immutability can also be easily exploited is in the definition of `Value Objects <https://martinfowler.com/eaaCatalog/valueObject.html>`_. Every business domain has a set of business value objects that are highly reusable. For example, in our banking application example, instead of defining a bank account number as a String, we define a value object to represent it and encapsulate some validation with it. The advantage of value objects is that they pull their own semantic weight at the same time that they properly validate constraints over the encapsulated value. And as a bonus advantage they are highly reusable.
 
@@ -1031,6 +1033,12 @@ And we could deal with logging errors in our ``ExceptionHandlers`` class:
  }
 
 Notice that in all logging examples from above, the account number is always present in the log entry, one way or another. This will make it possible for the developers to easily search the logs for specific entries of a given bank account and discover everything that happened to it.
+
+Testing Components
+------------------
+
+TBD
+
 
 Further Reading
 ---------------
