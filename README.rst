@@ -841,13 +841,13 @@ Given its a more generic nature, it could be used as the root of our hierarchy o
         this.accountNumber = accountNumber;
     }
 
-    public SavingsAccountException(String message, AccountNumber accountNumber, Throwable cause) {
-        super(message, cause);
+    public SavingsAccountException(AccountNumber accountNumber, Throwable cause) {
+        super(cause);
         this.accountNumber = accountNumber;
     }
 
-    public SavingsAccountException(AccountNumber accountNumber, Throwable cause) {
-        super(cause);
+    public SavingsAccountException(String message, AccountNumber accountNumber, Throwable cause) {
+        super(message, cause);
         this.accountNumber = accountNumber;
     }
 
@@ -865,7 +865,23 @@ Given its a more generic nature, it could be used as the root of our hierarchy o
 Checked vs Unchecked Exceptions
 -------------------------------
 
-TBD
+Java is one of those few languages that support this feature of checked exceptions and there's a lot of controversy on whether this was a good idea or not (e.g. `Trouble with Checked Exceptions`_ , `The Exceptions Debate`_ and `Does Java Need Checked Exceptions?`_).
+
+Even Java Specifications tend to get divided in this arena, for example JDBC API uses the checked exception ``SQLException`` in most of their interface methods. However, the JPA specification, which is also about data access, uses ``JPAException`` for everything, and this one is an unchecked exception.
+
+In `Effective Java`_ we read the following advise about checked exceptions:
+
+ The cardinal rule in deciding whether to use a checked or an unchecked exception is this: use checked exceptions for conditions from which the caller can reasonably be expected to recover. By throwing a checked exception, you force the caller to handle the exception in a catch clause or to propagate it outward. Each checked exception that a method is declared to throw is therefore a potent indication to the API user that the associated condition is a possible outcome of invoking the method.
+
+Regardless of the opinion we have on checked vs unchecked exceptions the main issue we have experienced so far with checked exceptions is that they don't play well with Java 8 functional interfaces making really hard to use any methods that throw them in fluent code of Stream API or reactive programming libraries like `RxJava <https://github.com/ReactiveX/RxJava>`_ or `Reactor <https://projectreactor.io>`_.
+
+The migration of applications using checked exceptions in Java 6 o 7 into Java 8 applications using lambdas, method references and stream API is a nightmare.
+
+Since checked exceptions are part of the method signature, most of these methods are incompatible with Java 8 functional interfaces or other third-party API functional interfaces whose method signatures typically do not declare to throw any checked exceptions in particular.
+
+If you are interested in knowing more in the past I had written about this and `several other shortcomings in the Java type system <https://stackoverflow.com/a/22919112/697630>`_ that would make developers life much harder if they had to deal with these checked exceptions every time they need to use them in lambda expression.
+
+The principles here is avoid checked exceptions and favor unchecked exceptions.
 
 Retryability: Transient vs Persistent Exceptions
 ------------------------------------------------
@@ -894,3 +910,6 @@ Further Reading
 .. _Objects Should Be Immutable: http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html
 .. _Data Transfer Object: https://martinfowler.com/eaaCatalog/dataTransferObject.html
 .. _Bean Validation: http://beanvalidation.org
+.. _Trouble with Checked Exceptions: http://www.artima.com/intv/handcuffs.html
+.. _The Exceptions Debate: https://www.ibm.com/developerworks/library/j-jtp05254/index.html
+.. _Does Java Need Checked Exceptions?: http://www.mindview.net/Etc/Discussions/CheckedExceptions
