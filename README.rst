@@ -642,9 +642,9 @@ The principles here are:
 * Strive to design exceptions specific to your business operations. Exceptions that already convey business semantics. This is better than just throwing ``RuntimeException`` or any other generic exception.
 * Design your exceptions to log all this meaningful information beautifully.
 
-So, the first point here is that designing good exceptions implies that the exceptions should encapsulate any contextual details from the place where the exception is being thrown. This information can be vital for a catching block to handle the exception or it can be very useful during troubleshooting to determine the exact state of the system when the problem occured, making it easier for the developers to reproduce the exact same event.
+So, the first point here is that designing good exceptions implies that the exceptions should encapsulate any contextual details from the place where the exception is being thrown. This information can be vital for a catching block to handle the exception or it can be very useful during troubleshooting to determine the exact state of the system when the problem occurred, making it easier for the developers to reproduce the exact same event.
 
-Additionally, it is ideal that exceptions themselves convey some business semantics. In other words, instead of just throwing ``RuntimeExcepion`` it is better if we create an exception that already conveys semantics of the specific condition under which it occurs.
+Additionally, it is ideal that exceptions themselves convey some business semantics. In other words, instead of just throwing ``RuntimeException`` it is better if we create an exception that already conveys semantics of the specific condition under which it occurred.
 
 Consider the following example:
 
@@ -672,11 +672,11 @@ Consider the following example:
   }
 
 
-Notice in the example above how we have defined a semantic exception to represent the exceptional condition of not having sufficient funds in an account when somebody tries to withdraw an invalid amount from it. This is a specific business exception.
+Notice in the example above how we have defined a semantic exception ``InsufficientFundsException`` to represent the exceptional condition of not having sufficient funds in an account when somebody tries to withdraw an invalid amount of money from it. This is a specific business exception.
 
 Also notice how the exception carries all the contextual details of why this is considered an exceptional condition: it encapsulates the account number affected, its current balance and the amount of money we were trying to withdraw when the exception was thrown.
 
-Any block catching this exception has sufficient details to determine what happend (since the exception itself is semantically meaningful) and why it happened (since the contextual details encapsulated within the exception object contain that information).
+Any block catching this exception has sufficient details to determine what happened (since the exception itself is semantically meaningful) and why it happened (since the contextual details encapsulated within the exception object contain that information).
 
 The definition of our exception class could be somewhat like this:
 
@@ -715,23 +715,9 @@ The definition of our exception class could be somewhat like this:
     }
  }
 
-This strategy makes it possible that if, at any point, an API user wants to catch this exception to handle it in any way, that API user can gain access to the specific details of why this exception occurred, even if the original parameters passed to the method where the exception occurred are no longer available in the context where the exception is being handled.
+This strategy makes it possible that if, at any point, an API user wants to catch this exception to handle it in any way, that API user can gain access to the specific details of why this exception occurred, even if the original parameters (passed to the method where the exception occurred) are no longer available in the context where the exception is being handled.
 
-It also worth noticing that the ``getMessage()`` method of ``InsufficientFundsException`` was overridden in this implementation. This message is the one that will be displayed our log stack traces if we decide to log this particular exception. Therefore it is of paramount importance that we always override this method in our exceptions classes such that those valuable contextual details they contain are also rendered in our logs. This is place where those details will most likely make a difference where we are trying to diagnose a problem with our system:
-
-::
-
- com.training.validation.demo.api.InsufficientFundsException: Insufficient funds in bank account 1-234-567-890: (balance $0.00, withdrawal: $1.00). The account is short $1.00
-	at com.training.validation.demo.domain.SavingsAccount.withdrawMoney(SavingsAccount.java:40) ~[classes/:na]
-	at com.training.validation.demo.impl.SavingsAccountService.lambda$null$0(SavingsAccountService.java:45) ~[classes/:na]
-	at java.util.Optional.map(Optional.java:215) ~[na:1.8.0_141]
-	at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:45) ~[classes/:na]
-	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
-	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
-	at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
-	at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
-
-On of those places where we'll want to handle this exception is in our ``ExceptionHandlers`` class from before. Notice how the exception is handled in a place where it totally taken out of context from the place where it was thrown, still since the exception contains all contextual details, we are capable of building a very meaningful message to send back to our API client.
+One of such places where we'll want to handle this exception in our ``ExceptionHandlers`` class from before. In the code below notice how the exception is handled in a place where it totally out of context from the place where it was thrown, still, since the exception contains all contextual details, we are capable of building a very meaningful, contextual message to send back to our API client.
 
 .. code-block:: java
 
@@ -755,10 +741,125 @@ On of those places where we'll want to handle this exception is in our ``Excepti
     //...
  }
 
+Also, it also worth noticing that the ``getMessage()`` method of ``InsufficientFundsException`` was overridden in this implementation. This message is the one that will be displayed our log stack traces if we decide to log this particular exception. Therefore it is of paramount importance that we always override this method in our exceptions classes such that those valuable contextual details they contain are also rendered in our logs. This is place where those details will most likely make a difference where we are trying to diagnose a problem with our system:
+
+::
+
+ com.training.validation.demo.api.InsufficientFundsException: Insufficient funds in bank account 1-234-567-890: (balance $0.00, withdrawal: $1.00). The account is short $1.00
+	at com.training.validation.demo.domain.SavingsAccount.withdrawMoney(SavingsAccount.java:40) ~[classes/:na]
+	at com.training.validation.demo.impl.SavingsAccountService.lambda$null$0(SavingsAccountService.java:45) ~[classes/:na]
+	at java.util.Optional.map(Optional.java:215) ~[na:1.8.0_141]
+	at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:45) ~[classes/:na]
+	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
+	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
+	at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
+	at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
+
 Exception Chaining and Leaky Abstractions
 -----------------------------------------
 
-TBD
+The principles here are:
+
+* Developers must know very well the abstractions they are using and be aware of any exceptions this abstractions or classes may throw.
+* Exceptions from your libraries should not be allowed to escape from within your own abstractions.
+* Make sure to use exception chaining in order to avoid that important contextual details are lost when you wrap low level exceptions into higher level exceptions.
+
+Effective Java explains it very well:
+
+ It is disconcerting when a method throws an exception that has no apparent connection to the task that it performs. This often happens when a method propagates an exception thrown by a lower-level abstraction. Not only is it disconcerting, but it pollutes the API of the higher layer with implementation details. If the implementation of the higher layer changes in a later release, the exceptions it throws will change too, potentially breaking existing client programs.
+
+ To avoid this problem, higher layers should catch lower-level exceptions and, in their place, throw exceptions that can be explained in terms of the higher-level abstraction. This idiom is known as exception translation:
+
+.. code-block:: java
+
+   // Exception Translation
+   try {
+      //Use lower-level abstraction to do our bidding
+      //...
+   } catch (LowerLevelException cause) {
+      throw new HigherLevelException(cause, context, ...);
+   }
+
+Every time we use a third-party API, library or framework our code is subject to fail for exceptions being thrown in their classes. We simply must not allow that those exceptions escape from our abstractions. Exceptions being thrown by the libraries we used should be translated to appropriate exceptions from our own API exception hierarchy.
+
+For example, for your data access layer, you should avoid leaking exceptions like ``SQLException`` or ``IOException`` or ``JPAException``. Instead, you may want to define a hierarchy of valid exceptions for you API. You can define a super class exception that your specific exceptions can inherit from and use that exception as part of your contract.
+
+Consider the following example from our ``SavingsAccountService``:
+
+.. code-block:: java
+
+ @Override
+ public double saveMoney(SaveMoney savings) {
+
+    Objects.requireNonNull(savings, "The savings request must not be null");
+
+    try {
+        return accountRepository.findAccountByNumber(savings.getAccountNumber())
+                                .map(account -> account.saveMoney(savings.getAmount()))
+                                .orElseThrow(() -> new BankAccountNotFoundException(savings.getAccountNumber()));
+    }
+    catch (DataAccessException cause) {
+        //avoid leaky abstractions and wrap lower level abstraction exceptions into your own exception
+        //make sure you keep the exception chain intact such that you don't lose sight of the root cause
+        throw new SavingsAccountException(savings.getAccountNumber(), cause);
+    }
+ }
+
+In the example above we recognize that it is possible that our data access layer might fail in recovering the detail of our savings account. There is no certainty of how this might fail, however we know that the Spring framework has a root exception for all data access exceptions: ``DataAccessException``. In this case we catch any possible data access failures and wrap them into a ``SavingsAccountException`` to avoid that the underlying abstraction exceptions escape our own abstraction.
+
+It is worth noticing how the ``SavingsAccountException`` not only provides contextual details, but also wraps the underlying exception. This exception chaining is a fundamental piece of information that is included in the stack trace when the exception is logged, without it we could only know that our system failed, but not why.
+
+::
+ com.training.validation.demo.api.SavingsAccountException: Failure to execute operation on account '1-234-567-890'
+	at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:51) ~[classes/:na]
+	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
+	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
+	at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
+	at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
+	at java.lang.Thread.run(Thread.java:748) [na:1.8.0_141]
+	... 38 common frames omitted
+ Caused by: org.springframework.dao.QueryTimeoutException: Database query timed out!
+	at com.training.validation.demo.impl.SavingsAccountRepository.findAccountByNumber(SavingsAccountRepository.java:31) ~[classes/:na]
+	at com.training.validation.demo.impl.SavingsAccountRepository$$FastClassBySpringCGLIB$$d53e9d8f.invoke(<generated>) ~[classes/:na]
+	... 58 common frames omitted
+
+The ``SavingsAccountException`` is a somewhat generic exception for our savings account services. Its semantic power is a bit limited though. For example, it tells us there was a problem with a savings account, but it does not explicitly tell us what exactly. For that matter we may consider adding an additional message or weight the possibility of defining a more contextual exception (e.g. ``WithdrawMoneyException``).
+Given its a more generic nature, could be the root of our hierarchy of exceptions used for the savings account services.
+
+
+.. code-block:: java
+ /**
+  * Thrown when any unexpected error occurs during a bank account transaction.
+  */
+ public class SavingsAccountException extends RuntimeException {
+
+    //all SavingsAccountException are characterized by the account number.
+    private final AccountNumber accountNumber;
+
+    public SavingsAccountException(AccountNumber accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
+    public SavingsAccountException(String message, AccountNumber accountNumber, Throwable cause) {
+        super(message, cause);
+        this.accountNumber = accountNumber;
+    }
+
+    public SavingsAccountException(AccountNumber accountNumber, Throwable cause) {
+        super(cause);
+        this.accountNumber = accountNumber;
+    }
+
+    public AccountNumber getAccountNumber() {
+        return accountNumber;
+    }
+
+    //the importance of overriding getMessage
+    @Override
+    public String getMessage() {
+        return String.format("Failure to execute operation on account '%s'", accountNumber);
+    }
+ }
 
 Checked vs Unchecked Exceptions
 -------------------------------
@@ -769,6 +870,10 @@ Retryability: Transient vs Persistent Exceptions
 ------------------------------------------------
 
 TBD
+
+Logging with Monitoring in Mind
+-------------------------------
+
 
 Further Reading
 ---------------

@@ -45,10 +45,10 @@ public class SavingsAccountService implements BankAccountService {
                                         .map(account -> account.withdrawMoney(withdrawal.getAmount()))
                                         .orElseThrow(() -> new BankAccountNotFoundException(withdrawal.getAccountNumber()));
             }
-            catch (DataAccessException ex) {
+            catch (DataAccessException cause) {
                 //avoid leaky abstractions and wrap lower level abstraction exceptions into your own exception
                 //make sure you keep the exception chain intact such that you don't lose sight of the root cause
-                throw new SavingsAccountException(withdrawal.getAccountNumber());
+                throw new SavingsAccountException(withdrawal.getAccountNumber(), cause);
                 //Would it make to have a more specific exception e.g. WithdrawMoneyException(withdrawal, ex)?
             }
         });
@@ -65,8 +65,10 @@ public class SavingsAccountService implements BankAccountService {
                                     .map(account -> account.saveMoney(savings.getAmount()))
                                     .orElseThrow(() -> new BankAccountNotFoundException(savings.getAccountNumber()));
         }
-        catch (DataAccessException ex) {
-            throw new SavingsAccountException(savings.getAccountNumber());
+        catch (DataAccessException cause) {
+            //avoid leaky abstractions and wrap lower level abstraction exceptions into your own exception
+            //make sure you keep the exception chain intact such that you don't lose sight of the root cause
+            throw new SavingsAccountException(savings.getAccountNumber(), cause);
         }
     }
 }
