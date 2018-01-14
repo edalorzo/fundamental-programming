@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class ErrorModel {
 
     @JsonCreator
     public ErrorModel(@JsonProperty("messages") List<String> messages) {
-        this.messages = messages;
+        this.messages = new ArrayList<>(messages);
     }
 
     public ErrorModel(String message) {
@@ -25,7 +26,7 @@ public class ErrorModel {
     }
 
     public List<String> getMessages() {
-        return messages;
+        return Collections.unmodifiableList(messages);
     }
 
     @Override

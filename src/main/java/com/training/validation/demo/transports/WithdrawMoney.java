@@ -3,6 +3,8 @@ package com.training.validation.demo.transports;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.training.validation.demo.common.AccountNumber;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.validation.constraints.Min;
@@ -40,6 +42,28 @@ public class WithdrawMoney {
     @Min(1)
     public double getAmount() {
         return amount;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        WithdrawMoney that = (WithdrawMoney) o;
+
+        return new EqualsBuilder()
+                .append(amount, that.amount)
+                .append(accountNumber, that.accountNumber)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(accountNumber)
+                .append(amount)
+                .toHashCode();
     }
 
     @Override

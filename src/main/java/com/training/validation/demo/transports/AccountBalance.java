@@ -1,6 +1,8 @@
 package com.training.validation.demo.transports;
 
 import com.training.validation.demo.common.AccountNumber;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.Objects;
@@ -31,6 +33,27 @@ public class AccountBalance {
         return balance;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AccountBalance that = (AccountBalance) o;
+
+        return new EqualsBuilder()
+                .append(balance, that.balance)
+                .append(accountNumber, that.accountNumber)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(accountNumber)
+                .append(balance)
+                .toHashCode();
+    }
 
     @Override
     public String toString() {

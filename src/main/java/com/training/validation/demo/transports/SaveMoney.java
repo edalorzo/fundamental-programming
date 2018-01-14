@@ -3,6 +3,8 @@ package com.training.validation.demo.transports;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.training.validation.demo.common.AccountNumber;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.validation.constraints.Min;
@@ -41,6 +43,27 @@ public class SaveMoney {
         return amount;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SaveMoney saveMoney = (SaveMoney) o;
+
+        return new EqualsBuilder()
+                .append(amount, saveMoney.amount)
+                .append(accountNumber, saveMoney.accountNumber)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(accountNumber)
+                .append(amount)
+                .toHashCode();
+    }
 
     @Override
     public String toString() {

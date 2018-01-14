@@ -1254,7 +1254,210 @@ In general I tend to prefer this approach better than using bean validation. Its
 Testing Components
 ------------------
 
-TBD
+For **immutable transport objects** and **value object**, I recommend **at least** testing the preconditions of the constructor, the validity of the equals and hascCode implementations and that serialization/deserialization works properly.
+
+.. code-block:: java
+
+ public class AccountNumberTest {
+
+     @Test
+     public void testValidConstruction() {
+         AccountNumber accountNumber = new AccountNumber("1-234-567-890");
+         assertThat(accountNumber.getNumber()).isEqualTo("1-234-567-890");
+         assertThat(accountNumber.toString()).isEqualTo("1-234-567-890");
+     }
+
+
+     @Test(expected = NullPointerException.class)
+     public void testInvalidAccountConstruction() {
+         new AccountNumber(null);
+         fail("The AccountNumber object must not be created with an invalid account number!");
+     }
+
+     @Test
+     public void testEqualityContract() {
+
+         AccountNumber alpha = new AccountNumber("1-234-567-890");
+         AccountNumber beta = new AccountNumber("1-234-567-890");
+         AccountNumber gamma = new AccountNumber("1-234-567-890");
+         AccountNumber delta = new AccountNumber("9-876-543-210");
+
+         //reflexive quality
+         assertTrue(alpha.equals(alpha));
+
+         //reflexive quality
+         assertTrue(alpha.equals(beta));
+         assertTrue(beta.equals(alpha));
+
+         //transitive quality
+         assertTrue(beta.equals(gamma));
+         assertTrue(alpha.equals(gamma));
+
+         //inequality
+         assertFalse(alpha.equals(delta));
+
+         //hashcode consistency
+         assertTrue(alpha.hashCode() == beta.hashCode());
+     }
+
+     @Test
+     public void testSerialization() {
+
+         ObjectMapper mapper = new ObjectMapper();
+         try {
+             AccountNumber source = new AccountNumber("1-234-567-890");
+             String json = mapper.writeValueAsString(source);
+             AccountNumber copy = mapper.readValue(json, AccountNumber.class);
+             assertThat(source).isEqualTo(copy);
+         }
+         catch (Exception e) {
+             fail(e.getMessage());
+         }
+     }
+ }
+
+For your **service layer**, you may want to use a library like Mockito to mock your data access layer and just focus on what should happen in the service layer. Make sure to test not only valid scenarios, but also invalid scenarios and attempts to violate preconditions.
+
+.. code-block:: java
+
+ @RunWith(MockitoJUnitRunner.class)
+ public class SavingsAccountServiceTest {
+
+    @Mock
+    private BankAccountRepository bankAccountRepository;
+
+    @InjectMocks
+    private SavingsAccountService savingsAccountService;
+
+    private final AccountNumber accountNumber = new AccountNumber("1-234-567-890");
+
+    @Test
+    public void testSuccessfulMoneySaving() {
+        when(bankAccountRepository.findAccountByNumber(accountNumber))
+                .thenReturn(Optional.of(new SavingsAccount(accountNumber)));
+
+        SaveMoney savings = new SaveMoney(new AccountNumber("1-234-567-890"), 100);
+        double balance = savingsAccountService.saveMoney(savings);
+
+        verify(bankAccountRepository, times(1)).findAccountByNumber(eq(accountNumber));
+        verifyNoMoreInteractions(bankAccountRepository);
+
+        assertThat(balance).isEqualTo(100.0);
+    }
+
+    @Test(expected = BankAccountNotFoundException.class)
+    public void testSavingsFailureDueToUnknownBankAccount() {
+
+        when(bankAccountRepository.findAccountByNumber(accountNumber))
+                .thenReturn(Optional.empty());
+
+        SaveMoney savings = new SaveMoney(new AccountNumber("1-234-567-890"), 100);
+        try {
+            savingsAccountService.saveMoney(savings);
+        }
+        catch (Exception e) {
+            verify(bankAccountRepository, times(1)).findAccountByNumber(eq(accountNumber));
+            verifyNoMoreInteractions(bankAccountRepository);
+            throw e;
+        }
+        fail("The saveMoney method should have failed!");
+    }
+
+    @Test
+    public void testSuccessfulMoneyWithdrawal() {
+
+        when(bankAccountRepository.findAccountByNumber(accountNumber))
+                .thenReturn(Optional.of(new SavingsAccount(accountNumber)));
+
+        SaveMoney savings = new SaveMoney(new AccountNumber("1-234-567-890"), 100);
+        savingsAccountService.saveMoney(savings);
+
+        WithdrawMoney withdraw = new WithdrawMoney(new AccountNumber("1-234-567-890"), 1);
+        double balance = savingsAccountService.withdrawMoney(withdraw);
+
+        verify(bankAccountRepository, times(2)).findAccountByNumber(eq(accountNumber));
+        verifyNoMoreInteractions(bankAccountRepository);
+
+        assertThat(balance).isEqualTo(99.0);
+    }
+
+    @Test(expected = InsufficientFundsException.class)
+    public void testWithdrawalFailureDueToInsufficientFunds() {
+
+        when(bankAccountRepository.findAccountByNumber(accountNumber))
+                .thenReturn(Optional.of(new SavingsAccount(accountNumber)));
+
+        WithdrawMoney withdraw = new WithdrawMoney(new AccountNumber("1-234-567-890"), 100);
+        try {
+            savingsAccountService.withdrawMoney(withdraw);
+        }
+        catch (Exception e) {
+            verify(bankAccountRepository, times(1)).findAccountByNumber(eq(accountNumber));
+            verifyNoMoreInteractions(bankAccountRepository);
+            throw e;
+        }
+        fail("The withDrawMoney method should have failed due to insufficient funds!");
+    }
+
+    @Test(expected = BankAccountNotFoundException.class)
+    public void testWithdrawalFailureDueToUnknownBankAccount() {
+
+        when(bankAccountRepository.findAccountByNumber(accountNumber))
+                .thenReturn(Optional.empty());
+
+        WithdrawMoney withdraw = new WithdrawMoney(new AccountNumber("1-234-567-890"), 100);
+        try {
+            savingsAccountService.withdrawMoney(withdraw);
+        }
+        catch (Exception e) {
+            verify(bankAccountRepository, times(1)).findAccountByNumber(eq(accountNumber));
+            verifyNoMoreInteractions(bankAccountRepository);
+            throw e;
+        }
+        fail("The withDrawMoney method should have failed due to missing account!");
+
+    }
+
+    @Test(expected = SavingsAccountException.class)
+    public void testWithdrawalFailureDueToOtherExceptions() {
+        when(bankAccountRepository.findAccountByNumber(accountNumber))
+                .thenThrow(new QueryTimeoutException("Query timed out!"));
+
+        WithdrawMoney withdraw = new WithdrawMoney(new AccountNumber("1-234-567-890"), 100);
+        try {
+            savingsAccountService.withdrawMoney(withdraw);
+        }
+        catch (Exception e) {
+            verify(bankAccountRepository, times(1)).findAccountByNumber(eq(accountNumber));
+            verifyNoMoreInteractions(bankAccountRepository);
+            throw e;
+        }
+        fail("The withDrawMoney method should have failed due to query time out!");
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testWithdrawalWithNullParameter() {
+        WithdrawMoney withdraw = new WithdrawMoney(new AccountNumber("1-234-567-890"), 100);
+        savingsAccountService.withdrawMoney(withdraw);
+        fail("The withDrawMoney method should have failed due to null parameter!");
+    }
+
+
+    @Test(expected = NullPointerException.class)
+    public void testSavingsWithNullParameter() {
+        SaveMoney savings = new SaveMoney(new AccountNumber("1-234-567-890"), 100);
+        savingsAccountService.saveMoney(savings);
+        fail("The saveMoney method should have failed due to null parameter!");
+    }
+
+ }
+
+
+
+
+
+
+
 
 
 Further Reading
