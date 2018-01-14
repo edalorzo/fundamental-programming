@@ -664,8 +664,6 @@ Consider the following example:
          }
          balance -= amount;
 
-         logger.info("Withdrew ${} from account {} for a final balance of ${}", amount, accountNumber, balance);
-
          return balance;
      }
 
@@ -718,6 +716,45 @@ The definition of our exception class could be somewhat like this:
  }
 
 This strategy makes it possible that if, at any point, an API user wants to catch this exception to handle it in any way, that API user can gain access to the specific details of why this exception occurred, even if the original parameters passed to the method where the exception occured are no longer available in the context where the exception is being handled.
+
+On of those places where we'll want to handle this exception is in our ``ExceptionHandlers`` class from before. Notice how the exception is handled in a place where it totally taken out of context from the place where it was thrown, still since the exception contains all contextual details, we are capable of building a very meaningful message to send back to our API client.
+
+.. code-block:: java
+
+ @ControllerAdvice
+ public class ExceptionHandlers {
+
+    //...
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorModel> handle(InsufficientFundsException ex) {
+
+        //look how powerful are the contextual exceptions!!!
+        String message = String.format("The bank account %s has a balance of $%.2f. Therefore you cannot withdraw $%.2f since you're short $%.2f",
+                ex.getAccountNumber(), ex.getBalance(), ex.getWithdrawal(), ex.getWithdrawal() - ex.getBalance());
+
+        logger.warn(message, ex);
+        return ResponseEntity.badRequest()
+                             .body(new ErrorModel(message));
+    }
+
+    //...
+ }
+
+It also worth noticing that the ``getMessage()`` method of ``InsufficientFundsException`` was overridden in this implementation. This message is the one that will be displayed our log stack traces if we decide to log this particular exception. Therefore it is of paramount importance that we override this method in our contextual exceptions such that those valuable contextual details they contain are also rendered in our logs:
+
+::
+
+ com.training.validation.demo.api.InsufficientFundsException: Insufficient funds in bank account 1-234-567-890: (balance $0.00, withdrawal: $1.00). The account is short $1.00
+	at com.training.validation.demo.domain.SavingsAccount.withdrawMoney(SavingsAccount.java:40) ~[classes/:na]
+	at com.training.validation.demo.impl.SavingsAccountService.lambda$null$0(SavingsAccountService.java:45) ~[classes/:na]
+	at java.util.Optional.map(Optional.java:215) ~[na:1.8.0_141]
+	at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:45) ~[classes/:na]
+	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
+	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
+	at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
+	at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
+
 
 Further Reading
 ---------------
