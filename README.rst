@@ -981,11 +981,11 @@ Using this information, clients can decide whether it make sense to retry a give
 Logging with Monitoring in Mind
 -------------------------------
 
-All these efforts we have put in writing defensive code and designing and implementing good exceptions pays off when we also add another principle to the mix:
+All these efforts we have put in writing defensive code and designing and implementing good exceptions pay off when we also add another principle to the mix:
 
 Design your applications with monitoring in mind.
 
-And the most fundamental tool we have at our disposal is logging. We must strive to log everything relevant that occurs in our application and that could help us troubleshoot any issues when the application is running in production.
+And the most fundamental tool we have at our disposal is logging. We must strive to log everything relevant that occurs in our application and that could help us troubleshoot any issues when the application is failing in production and we cannot easily debug the code step by step.
 
 * Log any errors that occur with their full stack traces. Just be sensitive that not all errors are critical (e.g. transient exceptions might be logged as warnings).
 * Make sure your logs always contain contextual details, particularly strive for keeping a correlation id that helps you keep track of related long entries (e.g. all entries affecting the same bank account should have such bank account number logged).
@@ -1040,6 +1040,9 @@ Further Reading
 * `Java SE 8 Optional, a pragmatic approach <http://blog.joda.org/2015/08/java-se-8-optional-pragmatic-approach.html>`_
 * `Objects Should Be Immutable`_
 * `Data Transfer Object`_
+* `Trouble with Checked Exceptions`_ ,
+* `The Exceptions Debate`_
+* `Does Java Need Checked Exceptions?`_
 * `Code Complete`_
 * `Effective Java`_
 * `Bean Validation`_
