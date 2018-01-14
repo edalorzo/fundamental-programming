@@ -491,6 +491,98 @@ Beware, though, that using Optional objects improperly is also very easy. The fo
 Spring Controller Barricade
 ---------------------------
 
+Following the barricade principle mentioned above, in a layered application, we will probably want to place that barricade in the controller layer, which is the place where we receive the user's input for a given a operation. Basically we want to avoid that the user's input goes beyond the controller if it is invalid. If a given transport object reaches the service layer it is because it has been properly validated.
+
+Consider the following example:
+
+.. code-block:: java
+
+ @RestController
+ @RequestMapping("/accounts")
+ public class SavingsAccountController {
+
+    private final BankAccountService accountService;
+
+    @Autowired
+    public SavingsAccountController(SavingsAccountService accountService) {
+        this.accountService = accountService;
+    }
+
+    @PutMapping("withdraw")
+    public ResponseEntity<AccountBalance> onMoneyWithdrawal(@RequestBody @Validated WithdrawMoney withdrawal, BindingResult errors) {
+
+        //this is the validation barrier
+        if (errors.hasErrors()) {
+            throw new ValidationException(errors);
+        }
+
+        //any exception thrown here will be handled in the ExceptionHandlers class
+        double balance = accountService.withdrawMoney(withdrawal);
+        return ResponseEntity.ok(new AccountBalance(
+                withdrawal.getAccountNumber(), balance));
+    }
+
+    @PutMapping("save")
+    public ResponseEntity<AccountBalance> onMoneySaving(@RequestBody @Validated SaveMoney savings, BindingResult errors) {
+
+        //this is the validation barrier
+        if (errors.hasErrors()) {
+            throw new ValidationException(errors);
+        }
+
+        //any exception thrown here will be handled in the ExceptionHandlers class
+        double balance = accountService.saveMoney(savings);
+        return ResponseEntity.ok(new AccountBalance(
+                savings.getAccountNumber(), balance));
+    }
+ }
+
+In the code above we're using Bean Validation to check that the user's DTO contains valid information. Any errors found in the DTOs is provided to the controller method in the ``BindingResult errors`` variable, from where the developer can extract all the details of what went wrong during the validation phase. It is very clear from the code above that if any validation errors are found, we'll never reach the service layer. This is where barrier is located.
+
+In order to make it easier for the developers to deal with this pattern, in the code above I simply wrap the ``BindingResult`` into a custom ``ValidationException`` which knows how to extract the validation error details.
+
+.. code-block:: java
+
+ public class ValidationException extends RuntimeException {
+
+    private final BindingResult errors;
+
+    public ValidationException(BindingResult errors) {
+        this.errors = errors;
+    }
+
+    public List<String> getMessages() {
+        return getValidationMessage(this.errors);
+    }
+
+
+    @Override
+    public String getMessage() {
+        return this.getMessages().toString();
+    }
+
+
+    //demonstrate how to extract a message from the binging result
+    private static List<String> getValidationMessage(BindingResult bindingResult) {
+        return bindingResult.getAllErrors()
+                .stream()
+                .map(ValidationException::getValidationMessage)
+                .collect(Collectors.toList());
+    }
+
+    private static String getValidationMessage(ObjectError error) {
+        if (error instanceof FieldError) {
+            FieldError fieldError = (FieldError) error;
+            String className = fieldError.getObjectName();
+            String property = fieldError.getField();
+            Object invalidValue = fieldError.getRejectedValue();
+            String message = fieldError.getDefaultMessage();
+            return String.format("%s.%s %s, but it was %s", className, property, message, invalidValue);
+        }
+        return String.format("%s: %s", error.getObjectName(), error.getDefaultMessage());
+    }
+
+ }
 
 
 Further Reading
@@ -498,6 +590,7 @@ Further Reading
 
 * `Design By Contract`_
 * `Null References: The Billion Dollar Mistake <https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare>`_
+* `Java SE 8 Optional, a pragmatic approach <http://blog.joda.org/2015/08/java-se-8-optional-pragmatic-approach.html>`_
 * `Objects Should Be Immutable`_
 * `Data Transfer Object`_
 * `Code Complete`_
