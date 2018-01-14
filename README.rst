@@ -478,7 +478,11 @@ However, if we change our repository method to return a Java 8 Optional object, 
                             .orElseThrow(() -> new BankAccountNotFoundException(withdrawal.getAccountNumber()));
  }
 
-Beware, though, that using Optional objects improperly is also very easy. Make sure to read `Java SE 8 Optional, a pragmatic approach <http://blog.joda.org/2015/08/java-se-8-optional-pragmatic-approach.html>`_. You may also consider `this answer <https://stackoverflow.com/a/26328555/697630>`_ given by Brian Goetz (lead of Java 8 project at Oracle) in Stackoverflow on the subject of proper uses of optional objects. You may want to consider this `another answer <https://stackoverflow.com/a/18699418/697630>`_ in which I explain several things wrong with the use of optional.
+Beware, though, that using Optional objects improperly is also very easy. The following articles might help you avoid common pitfalls:
+
+* `Java SE 8 Optional, a pragmatic approach <http://blog.joda.org/2015/08/java-se-8-optional-pragmatic-approach.html>`_ by Stephen Colebourne (creator of Joda Time and JDK 8 Date/Time API).
+* `Should Java 8 getters return optional type? <https://stackoverflow.com/a/26328555/697630>`_ answered by Brian Goetz (lead of Java 8 project at Oracle)
+* `Should I use Java8/Guava Optional for every method that may return null? <https://stackoverflow.com/a/18699418/697630>`_ which I answered myself a few years ago.
 
 Spring Controller Barricade
 ---------------------------
