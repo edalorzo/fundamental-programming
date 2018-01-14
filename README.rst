@@ -587,9 +587,9 @@ In order to make it easier for the developers to deal with this pattern, in the 
 HTTP Status Codes and Exception Serialization
 ---------------------------------------------
 
-How should the controller layer deal with the exceptions? For example, in the code example above the ``ValidationException`` will be thrown when the payload is invalid. How should the controller deal with this?
+How should the controller layer deal with the exceptions? In the code above the ``ValidationException`` will be thrown when the payload is invalid. How should the controller create a response for the client out of this?
 
-The are multiple ways to deal with this, but perhaps the simplest solution is to define a class annotate with ``@ControllerAdvice`` where we can place our exception handlers for any exception we know our controller and service layer may throw:
+There are multiple ways to deal with this, but perhaps the simplest solution is to define a class annotated as ``@ControllerAdvice``. In this annotated class we will place our exception handlers for any specific exception that we want to handle and turn them into a valid response object to travel back to our clients:
 
 .. code-block:: java
 
@@ -605,7 +605,7 @@ The are multiple ways to deal with this, but perhaps the simplest solution is to
     //...
  }
 
-Since we are not using Java RMI as the serialization protocol for our objects, we simply cannot send a Java Exception object back to the client. We must serialize the error somehow in an object that we can ideed serialize and send back. For that matter we can define a ``ErrorModel`` transport object and we simply populated it with details in the handler of this particular exception. This is a simplified version of what could be done. Perhaps for real production applications we may want to put a few more details in this error model.
+Since we are not using Java RMI as the serialization protocol for our objects, we simply cannot send a Java ``Exception`` object back to the client. We inspect the exception and construct a valid, serializable object that we can indeed send back to our clients. For that matter we defined an ``ErrorModel`` transport object and we simply populated it with details in the handler of this particular exception. This is a simplified version of what could be done. Perhaps for real production applications we may want to put a few more details in this error model.
 
 .. code-block:: java
 
