@@ -1143,7 +1143,7 @@ However, if we just do this, we should also include a constructor, otherwise the
 
 At this point, the object is self-defensive. It cannot be built in an inconsistent state. But once you realize that this is the case, then why do we need bean validation? If the object guarantees it is always in a consistent state there is no need to validate it any further.
 
-Even, more, in case like this you can probably get rid of the setter methods and make your object entirely immutable, and just survive with the validations in the constructor, which makes it even simpler. No bean validation whatsoever.
+Even, more, in a case like this you can probably get rid of the setter methods and make your object entirely immutable, and just survive with the validations in the constructor, which makes it even simpler. No bean validation whatsoever.
 
 .. code-block:: java
 
@@ -1176,7 +1176,7 @@ Even, more, in case like this you can probably get rid of the setter methods and
 
 **How do we build the controller barrier then?**
 
-The thing is that if an API user sends a JSON object that is invalid, the deserialization of that object will fail when invoking our ``SaveMoney``. Consider the following example:
+The thing is that if an API user sends a JSON object that is invalid, the deserialization of that object will fail when invoking our ``SaveMoney`` constructor. Consider the following example:
 
 .. code-block:: java
 
@@ -1204,7 +1204,7 @@ Our mapper above fails to deserialize our JSON object because the account is nul
 	at com.fasterxml.jackson.databind.deser.std.StdValueInstantiator.createFromObjectWith(StdValueInstantiator.java:274)
 	... 14 more
 
-So, the first change we must do is change the way we build our validation barrier in the controller. We no longer need to use bean validation or BindingResult objects.
+So, the first change we must do is change the way we build our validation barrier in the controller. We no longer need to use bean validation or ``BindingResult`` objects since we're guarantee that if the object reaches our controller method it is completely valid. If it is invalid, it will fail in the deserialization phase, though.
 
 .. code-block:: java
 
@@ -1215,7 +1215,7 @@ So, the first change we must do is change the way we build our validation barrie
             savings.getAccountNumber(), balance));
  }
 
-And we must improve our ExceptionHandlers class to deal with any deserialization problems of our DTOs:
+To deal with the possibility of a deserialization failure of our now self-defensive object we must improve our ``ExceptionHandlers`` class to deal with any validation failures we may encounter:
 
 .. code-block:: java
 
@@ -1245,7 +1245,7 @@ And we must improve our ExceptionHandlers class to deal with any deserialization
 
  }
 
-Notice how our ``ExceptionHandlers`` class now extends ``ResponseEntityExceptionHandler`` and we override the ``handleHttpMessageNotReadable`` method for the particular case of a ``HttpMessageNotReadableException``, which is the one Spring throws when it fails to deserialize our JSON object.
+Notice how our ``ExceptionHandlers`` class now extends ``ResponseEntityExceptionHandler`` and we override the ``handleHttpMessageNotReadable`` method for the particular case of a ``HttpMessageNotReadableException``, which is the exception Spring throws when it fails to deserialize our JSON object.
 
 In the handler we go over the tree of causes of the exception to determine if the original cause was ``NullPointerException`` or a ``IllegalArgumentException`` which are the two exceptions we use to validate our DTOs. If so, we handle the case by sending a 400 Bad Request with the corresponding ``ErrorModel`` object containing the same details given in the exception message. The net effect is similar to what bean validation would have sent.
 
