@@ -684,26 +684,38 @@ The definition of our exception class could be somewhat like this:
 
 .. code-block:: java
 
-  /**
-   * Thrown when a given transaction on an account cannot be completed due to insufficient funds in the account's balance (e.g. withdrawals or transfer of funds).
-   */
-  public class InsufficientFundsException extends ServiceException {
+ /**
+  * Thrown when the bank account does not have sufficient funds to satisfy
+  * an operation, e.g. a withdrawal.
+  */
+ public class InsufficientFundsException extends SavingsAccountException {
 
-     private final AccountNumber accountNumber;
-     private final double currentBalance;
-     private final double withdrawalAmount;
+    private final double balance;
+    private final double withdrawal;
 
-     public InsuficcientFundsException(AccountNumber accountNumber, double currentBalance, double withdrawalAmount) {
-      this.accountNumber = accountNumber;
-      this.currentBalance = currentBalance;
-      this.withdrawalAmount = withdrawalAmount;
-     }
+    //stores contextual details
+    public InsufficientFundsException(AccountNumber accountNumber, double balance, double withdrawal) {
+        super(accountNumber);
+        this.balance = balance;
+        this.withdrawal = withdrawal;
+    }
 
-     public AccountNumber getAccountNumber() { return this.accountNumber; }
-     public double getAccountBalance() { return this.currentBalance; }
-     public double getWithdrawalAmount() { return this.withdrawalAmount; }
+    public double getBalance() {
+        return balance;
+    }
 
-  }
+    public double getWithdrawal() {
+        return withdrawal;
+    }
+
+    //the importance of overriding getMessage to provide a personalized message
+    @Override
+    public String getMessage() {
+        return String.format("Insufficient funds in bank account %s: (balance $%.2f, withdrawal: $%.2f)." +
+                                     " The account is short $%.2f",
+                this.getAccountNumber(), this.balance, this.withdrawal, this.withdrawal - this.balance);
+    }
+ }
 
 This strategy makes it possible that if, at any point, an API user wants to catch this exception to handle it in any way, that API user can gain access to the specific details of why this exception occurred, even if the original parameters passed to the method where the exception occured are no longer available in the context where the exception is being handled.
 
