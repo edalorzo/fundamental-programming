@@ -908,7 +908,7 @@ There are several strategies we could follow to indicate an exceptions is transi
 
 The Spring Framework follows the approach in the third option for its data access classes. All exceptions that inherit from `TransientDataAccessException`_ are considered transient and retryable in Spring.
 
-This plays rather well with the `Spring Retry`_ Framework. It becomes particularly simply to define a retry policy that retries any transient exceptions from the data access layer. Consider the following example:
+This plays rather well with the `Spring Retry`_ Framework. It becomes particularly simply to define a retry policy that retries any operation that caused a transient exception in the data access layer. Consider the following example:
 
 .. code-block:: java
 
@@ -929,16 +929,18 @@ This plays rather well with the `Spring Retry`_ Framework. It becomes particular
                                      .orElseThrow(() -> new BankAccountNotFoundException(withdrawal.getAccountNumber()));
          }
          catch (DataAccessException cause) {
-            //we get here only for permanent exceptions
-            //or if we exhausted the 3 retry attempts.
+            //we get here only for persistent exceptions
+            //or if we exhausted the 3 retry attempts of any transient exception.
             throw new SavingsAccountException(withdrawal.getAccountNumber(), cause);
          }
      });
   }
 
-In the code above, if the DAO fails to retrieve a record from the database due to a query timeout, Spring would wrap that failure into a `QueryTimeoutException`_ which is also a `TransientDataAccessException`_.
+In the code above, if the DAO fails to retrieve a record from the database due to e.g. a query timeout, Spring would wrap that failure into a `QueryTimeoutException`_ which is also a `TransientDataAccessException`_.
 
-When send error models back to our clients we can also take advantage of knowing if a given exception is transient or not. This information let us tell the clients that they could retry the operation after certain back off period.
+**How about transient error models?**
+
+When we send error models back to our clients we can also take advantage of knowing if a given exception is transient or not. This information let us tell the clients that they could retry the operation after certain back off period.
 
 .. code-block:: java
 
@@ -979,6 +981,56 @@ Using this information, clients can decide whether it make sense to retry a give
 Logging with Monitoring in Mind
 -------------------------------
 
+All these efforts we have put in writing defensive code and designing and implementing good exceptions pays off when we also add another principle to the mix:
+
+Design your applications with monitoring in mind.
+
+And the most fundamental tool we have at our disposal is logging. We must strive to log everything relevant that occurs in our application and that could help us troubleshoot any issues when the application is running in production.
+
+* Log any errors that occur with their full stack traces. Just be sensitive that not all errors are critical (e.g. transient exceptions might be logged as warnings).
+* Make sure your logs always contain contextual details, particularly strive for keeping a correlation id that helps you keep track of related long entries (e.g. all entries affecting the same bank account should have such bank account number logged).
+* You may want to log when successful operations finished successfully.
+
+Successes can be logged exactly where they occur:
+
+.. code-block:: java
+
+ @Override
+ public double withdrawMoney(double amount) {
+    if(amount <= 0)
+        throw new IllegalArgumentException("The amount must be >= 0: " + amount);
+
+    if(balance < amount) {
+        throw new InsufficientFundsException(accountNumber, balance, amount);
+    }
+    balance -= amount;
+
+    logger.info("Withdrew ${} from account {} for a final balance of ${}", amount, accountNumber, balance);
+
+    return balance;
+ }
+
+And we could deal with logging errors in our ``ExceptionHandlers`` class:
+
+
+.. code-block:: java
+
+ @ExceptionHandler
+ public ResponseEntity<ErrorModel> handle(SavingsAccountException ex) {
+    if(isTransient(ex)) {
+        //notice how logging level changes depending on whether the exception is transient or persistent
+        logger.warn("Failure while processing operation on savings account: {}", ex.getAccountNumber(), ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                             .header("Retry-After", "5000")
+                             .body(new ErrorModel(ex.getMessage()));
+    } else {
+        logger.error("Failure while processing operation on savings account: {}", ex.getAccountNumber(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                             .body(new ErrorModel(ex.getMessage()));
+    }
+ }
+
+Notice that in all logging examples from above, the account number is always present in the log entry, one way or another. This will make it possible for the developers to easily search the logs for specific entries of a given bank account and discover everything that happened to it.
 
 Further Reading
 ---------------
