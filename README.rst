@@ -715,7 +715,21 @@ The definition of our exception class could be somewhat like this:
     }
  }
 
-This strategy makes it possible that if, at any point, an API user wants to catch this exception to handle it in any way, that API user can gain access to the specific details of why this exception occurred, even if the original parameters passed to the method where the exception occured are no longer available in the context where the exception is being handled.
+This strategy makes it possible that if, at any point, an API user wants to catch this exception to handle it in any way, that API user can gain access to the specific details of why this exception occurred, even if the original parameters passed to the method where the exception occurred are no longer available in the context where the exception is being handled.
+
+It also worth noticing that the ``getMessage()`` method of ``InsufficientFundsException`` was overridden in this implementation. This message is the one that will be displayed our log stack traces if we decide to log this particular exception. Therefore it is of paramount importance that we always override this method in our exceptions classes such that those valuable contextual details they contain are also rendered in our logs. This is place where those details will most likely make a difference where we are trying to diagnose a problem with our system:
+
+::
+
+ com.training.validation.demo.api.InsufficientFundsException: Insufficient funds in bank account 1-234-567-890: (balance $0.00, withdrawal: $1.00). The account is short $1.00
+	at com.training.validation.demo.domain.SavingsAccount.withdrawMoney(SavingsAccount.java:40) ~[classes/:na]
+	at com.training.validation.demo.impl.SavingsAccountService.lambda$null$0(SavingsAccountService.java:45) ~[classes/:na]
+	at java.util.Optional.map(Optional.java:215) ~[na:1.8.0_141]
+	at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:45) ~[classes/:na]
+	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
+	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
+	at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
+	at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
 
 On of those places where we'll want to handle this exception is in our ``ExceptionHandlers`` class from before. Notice how the exception is handled in a place where it totally taken out of context from the place where it was thrown, still since the exception contains all contextual details, we are capable of building a very meaningful message to send back to our API client.
 
@@ -741,20 +755,20 @@ On of those places where we'll want to handle this exception is in our ``Excepti
     //...
  }
 
-It also worth noticing that the ``getMessage()`` method of ``InsufficientFundsException`` was overridden in this implementation. This message is the one that will be displayed our log stack traces if we decide to log this particular exception. Therefore it is of paramount importance that we override this method in our contextual exceptions such that those valuable contextual details they contain are also rendered in our logs:
+Exception Chaining and Leaky Abstractions
+-----------------------------------------
 
-::
+TBD
 
- com.training.validation.demo.api.InsufficientFundsException: Insufficient funds in bank account 1-234-567-890: (balance $0.00, withdrawal: $1.00). The account is short $1.00
-	at com.training.validation.demo.domain.SavingsAccount.withdrawMoney(SavingsAccount.java:40) ~[classes/:na]
-	at com.training.validation.demo.impl.SavingsAccountService.lambda$null$0(SavingsAccountService.java:45) ~[classes/:na]
-	at java.util.Optional.map(Optional.java:215) ~[na:1.8.0_141]
-	at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:45) ~[classes/:na]
-	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
-	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
-	at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
-	at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
+Checked vs Unchecked Exceptions
+-------------------------------
 
+TBD
+
+Retryability: Transient vs Persistent Exceptions
+------------------------------------------------
+
+TBD
 
 Further Reading
 ---------------
