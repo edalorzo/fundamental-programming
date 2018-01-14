@@ -632,6 +632,81 @@ Since we are not using Java RMI as the serialization protocol for our services, 
 
 Finally, notice how the error handler code from the ``ExceptionHandlers`` from before treats any ``ValidationException`` as HTTP Status 400: Bad Request. That will allow the client to inspect the status code of the response and discover that the service rejected its payload because there is something wrong with it.
 
+
+Design Contextual Exceptions
+----------------------------
+
+The principles here are:
+
+* Good exceptions contains all the relevant details of their context such that any catching blocks can get any necessary details to handle them.
+* Strive to design exceptions specific to your business operations. Exceptions that already convey business semantics. This is better than just throwing ``RuntimeException`` or any other generic exception.
+* Design your exceptions to log all this meaningful information beautifully.
+
+So, the first point here is that designing good exceptions implies that the exceptions should encapsulate any contextual details from the place where the exception is being thrown. This information can be vital for a catching block to handle the exception or it can be very useful during troubleshooting to determine the exact state of the system when the problem occured, making it easier for the developers to reproduce the exact same event.
+
+Additionally, it is ideal that exceptions themselves convey some business semantics. In other words, instead of just throwing ``RuntimeExcepion`` it is better if we create an exception that already conveys semantics of the specific condition under which it occurs.
+
+Consider the following example:
+
+.. code-block:: java
+
+  public class SavingsAccount implements BankAccount {
+
+     //...
+
+     @Override
+     public double withdrawMoney(double amount) {
+         if(amount <= 0)
+             throw new IllegalArgumentException("The amount must be >= 0: " + amount);
+
+         if(balance < amount) {
+             throw new InsufficientFundsException(accountNumber, balance, amount);
+         }
+         balance -= amount;
+
+         logger.info("Withdrew ${} from account {} for a final balance of ${}", amount, accountNumber, balance);
+
+         return balance;
+     }
+
+     //...
+
+  }
+
+
+Notice in the example above how we have defined a semantic exception to represent the exceptional condition of not having sufficient funds in an account when somebody tries to withdraw an invalid amount from it. This is a specific business exception.
+
+Also notice how the exception carries all the contextual details of why this is considered an exceptional condition: it encapsulates the account number affected, its current balance and the amount of money we were trying to withdraw when the exception was thrown.
+
+Any block catching this exception has sufficient details to determine what happend (since the exception itself is semantically meaningful) and why it happened (since the contextual details encapsulated within the exception object contain that information).
+
+The definition of our exception class could be somewhat like this:
+
+.. code-block:: java
+
+  /**
+   * Thrown when a given transaction on an account cannot be completed due to insufficient funds in the account's balance (e.g. withdrawals or transfer of funds).
+   */
+  public class InsufficientFundsException extends ServiceException {
+
+     private final AccountNumber accountNumber;
+     private final double currentBalance;
+     private final double withdrawalAmount;
+
+     public InsuficcientFundsException(AccountNumber accountNumber, double currentBalance, double withdrawalAmount) {
+      this.accountNumber = accountNumber;
+      this.currentBalance = currentBalance;
+      this.withdrawalAmount = withdrawalAmount;
+     }
+
+     public AccountNumber getAccountNumber() { return this.accountNumber; }
+     public double getAccountBalance() { return this.currentBalance; }
+     public double getWithdrawalAmount() { return this.withdrawalAmount; }
+
+  }
+
+This strategy makes it possible that if, at any point, an API user wants to catch this exception to handle it in any way, that API user can gain access to the specific details of why this exception occurred, even if the original parameters passed to the method where the exception occured are no longer available in the context where the exception is being handled.
+
 Further Reading
 ---------------
 
