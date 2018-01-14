@@ -807,7 +807,7 @@ Consider the following example from our ``SavingsAccountService``:
 
 In the example above we recognize that it is possible that our data access layer might fail in recovering the details of our savings account. There is no certainty of how this might fail, however we know that the Spring framework has a root exception for all data access exceptions: ``DataAccessException``. In this case we catch any possible data access failures and wrap them into a ``SavingsAccountException`` to avoid that the underlying abstraction exceptions escape our own abstraction.
 
-It is worth noticing how the ``SavingsAccountException`` not only provides contextual details, but also wraps the underlying exception. This exception chaining is a fundamental piece of information that is included in the stack trace when the exception is logged, without it we could only know that our system failed, but not why.
+It is worth noticing how the ``SavingsAccountException`` not only provides contextual details, but also wraps the underlying exception. This exception chaining is a fundamental piece of information that is included in the stack trace when the exception is logged, without it we could only know that our system failed, but not why:
 
 ::
 
