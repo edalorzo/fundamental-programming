@@ -1034,6 +1034,223 @@ And we could deal with logging errors in our ``ExceptionHandlers`` class:
 
 Notice that in all logging examples from above, the account number is always present in the log entry, one way or another. This will make it possible for the developers to easily search the logs for specific entries of a given bank account and discover everything that happened to it.
 
+Bean Validation Drawbacks
+-------------------------
+
+When we use `Bean Validation`_ there is this expectation that we can create an object that is initially defined in an inconsistent or invalid state and then later we run a validation API on it to discover whether the object violates any constraints.
+
+.. code-block:: java
+
+ public class SaveMoney {
+
+    private AccountNumber accountNumber;
+    private double amount;
+
+    @NotNull
+    public AccountNumber getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(AccountNumber accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
+    @Min(1)
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+ }
+
+As you can see, just by invoking the ``new SaveMoney()`` constructor we end up with an instance of this object in an completely invalid state. It setter methods are not better, we could also use them to put the object in an invalid state:
+
+.. code-block:: java
+
+  SaveMoney savings = new SaveMoney(); //instance is already invalid with a null account and amount of 0.0
+  savings.setAccount(null);
+  savings.setAmount(-1.0);
+
+  //we have to resort to a third-party api to validate our object
+  ValidatorFactory vf = Validation.buildDefaultValidatorFactory();
+  Validator validator = vf.getValidator();
+
+  Set<ConstraintViolation<SaveMoney>> violations;
+  violations = validator.validate(savings);
+  if(violations.size() > 0){
+      throw new ValidationException(violations);
+  }
+
+For me, this possibility of having an object in an inconsistent state is a major design flaw. My point is that if the object was properly designed, it should defend itself from getting into an invalid state from the beginning.
+
+We could improve things a little bit if we made a our setter methods to also do validations:
+
+.. code-block:: java
+
+ public void setAccountNumber(AccountNumber accountNumber) {
+    Objects.requireNonNull(accountNumber, "The account number must not be null");
+    this.accountNumber = accountNumber;
+ }
+
+ public void setAmount(double amount) {
+    if(amount <= 0) {
+        throw new IllegalArgumentException("The amount must be > 0: " + amount);
+    }
+    this.amount = amount;
+ }
+
+However, if we just do this, we should also include a constructor, otherwise the object may still be built in an invalid state:
+
+.. code-block:: java
+
+ public class SaveMoney {
+
+    private AccountNumber accountNumber;
+    private double amount;
+
+    public SaveMoney(AccountNumber accountNumber, double amount) {
+        Objects.requireNonNull(accountNumber, "The account number must not be null");
+        if(amount <= 0) {
+            throw new IllegalArgumentException("The amount must be > 0: " + amount);
+        }
+        this.accountNumber = accountNumber;
+        this.amount = amount;
+    }
+
+    @NotNull
+    public AccountNumber getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(AccountNumber accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
+    @Min(1)
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        if(amount <= 0) {
+            throw new IllegalArgumentException("The amount must be > 0: " + amount);
+        }
+        this.amount = amount;
+    }
+ }
+
+At this point, the object is self-defensive. It cannot be built in an inconsistent state. But once you realize that this is the case, then why do we need bean validation? If the object guarantees it is always in a consistent state there is no need to validate it any further.
+
+Even, more, in case like this you can probably get rid of the setter methods and make your object entirely immutable, and just survive with the validations in the constructor, which makes it even simpler. No bean validation whatsoever.
+
+.. code-block:: java
+
+ public class SaveMoney {
+
+    //strive to design immutable DTOs
+    private final AccountNumber accountNumber;
+    private final double amount;
+
+    @JsonCreator
+    public SaveMoney(@JsonProperty("accountNumber") AccountNumber accountNumber,
+                     @JsonProperty("amount") double amount) {
+
+        Objects.requireNonNull(accountNumber, "The account number must not be null");
+        if(amount <= 0) {
+            throw new IllegalArgumentException("The amount must be > 0: " + amount);
+        }
+        this.accountNumber = accountNumber;
+        this.amount = amount;
+    }
+
+    public AccountNumber getAccountNumber() {
+        return accountNumber;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+ }
+
+**How do we build the controller barrier then?**
+
+The thing is that if an API user sends a JSON object that is invalid, the deserialization of that object will fail when invoking our ``SaveMoney``. Consider the following example:
+
+.. code-block:: java
+
+ public static void main(String[] args) throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    String json = "{\"account\": null, \"amount\": -1.0}";
+    SaveMoney savings = mapper.readValue(json, SaveMoney.class);
+ }
+
+Our mapper above fails to deserialize our JSON object because the account is null. The failure is expected in our defensive constructor.
+
+::
+
+ Exception in thread "main" com.fasterxml.jackson.databind.JsonMappingException: Can not construct instance of com.training.validation.demo.transports.SaveMoney, problem: The account number must not be null
+  at [Source: {"account": null, "amount": -1.0}; line: 1, column: 33]
+	at com.fasterxml.jackson.databind.JsonMappingException.from(JsonMappingException.java:277)
+ Caused by: java.lang.NullPointerException: The account number must not be null
+	at java.util.Objects.requireNonNull(Objects.java:228)
+	at com.training.validation.demo.transports.SaveMoney.<init>(SaveMoney.java:26)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+	at com.fasterxml.jackson.databind.introspect.AnnotatedConstructor.call(AnnotatedConstructor.java:124)
+	at com.fasterxml.jackson.databind.deser.std.StdValueInstantiator.createFromObjectWith(StdValueInstantiator.java:274)
+	... 14 more
+
+So, the first change we must do is change the way we build our validation barrier in the controller. We no longer need to use bean validation or BindingResult objects.
+
+.. code-block:: java
+
+ @PutMapping("save")
+ public ResponseEntity<AccountBalance> onMoneySaving(@RequestBody SaveMoney savings) {
+    double balance = accountService.saveMoney(savings);
+    return ResponseEntity.ok(new AccountBalance(
+            savings.getAccountNumber(), balance));
+ }
+
+And we must improve our ExceptionHandlers class to deal with any deserialization problems of our DTOs:
+
+.. code-block:: java
+
+ @ControllerAdvice
+ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
+
+    //...
+
+    //since we add nullability and constraints checks to our DTOs in their constructors
+    //these might fail even before reaching the Bean Validation phase, so by adding this
+    //handler we make sure to respond with an appropriate when that occurs.
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        Throwable cause = ex.getCause();
+        while (cause != null && !(cause instanceof NullPointerException || cause instanceof IllegalArgumentException)) {
+            cause = cause.getCause();
+        }
+        if (cause != null) {
+            return ResponseEntity.badRequest()
+                                 .body(new ErrorModel(singletonList(cause.getMessage())));
+        }
+        return super.handleHttpMessageNotReadable(ex, headers, status, request);
+    }
+
+    //...
+
+ }
+
+Notice how our ``ExceptionHandlers`` class now extends ``ResponseEntityExceptionHandler`` and we override the ``handleHttpMessageNotReadable`` method for the particular case of a ``HttpMessageNotReadableException``, which is the one Spring throws when it fails to deserialize our JSON object.
+
+In the handler we go over the tree of causes of the exception to determine if the original cause was ``NullPointerException`` or a ``IllegalArgumentException`` which are the two exceptions we use to validate our DTOs. If so, we handle the case by sending a 400 Bad Request with the corresponding ``ErrorModel`` object containing the same details given in the exception message. The net effect is similar to what bean validation would have sent.
+
+In general I tend to prefer this approach better than using bean validation. Its major advantages are that the objects are always consistent and valid and I can exploit immutability.
+
 Testing Components
 ------------------
 
