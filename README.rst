@@ -825,10 +825,10 @@ It is worth noticing how the ``SavingsAccountException`` not only provides conte
 	... 58 common frames omitted
 
 The ``SavingsAccountException`` is a somewhat generic exception for our savings account services. Its semantic power is a bit limited though. For example, it tells us there was a problem with a savings account, but it does not explicitly tell us what exactly. For that matter we may consider adding an additional message or weight the possibility of defining a more contextual exception (e.g. ``WithdrawMoneyException``).
-Given its a more generic nature, could be the root of our hierarchy of exceptions used for the savings account services.
-
+Given its a more generic nature, it could be used as the root of our hierarchy of exceptions used for the savings account services.
 
 .. code-block:: java
+
  /**
   * Thrown when any unexpected error occurs during a bank account transaction.
   */
