@@ -455,7 +455,7 @@ It is fundamental that value objects have proper implementations of ``equals``, 
 Use Java 8 Optional When Possible
 ---------------------------------
 
-A proper use of Java 8 Optional can alleviate a lot of mistakes related to null references. For example, in the following code the developer makes the mistake of not checking whether the reference returned by the method is null or not:
+A proper use of `Java 8 Optional <https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html>`_ or `Google Guava Optional <https://google.github.io/guava/releases/19.0/api/docs/com/google/common/base/Optional.html>`_ can alleviate a lot of mistakes related to null references. For example, in the following code the developer makes the mistake of not checking whether the reference returned by the method is null or not:
 
 .. code-block:: java
 
