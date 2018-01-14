@@ -584,8 +584,8 @@ In order to make it easier for the developers to deal with this pattern, in the 
 
  }
 
-HTTP Status Codes and Exception Serialization
----------------------------------------------
+Exception Serialization
+-----------------------
 
 How should the controller layer deal with the exceptions? In the code above the ``ValidationException`` will be thrown when the payload is invalid. How should the controller create a response for the client out of this?
 
@@ -605,7 +605,7 @@ There are multiple ways to deal with this, but perhaps the simplest solution is 
     //...
  }
 
-Since we are not using Java RMI as the serialization protocol for our objects, we simply cannot send a Java ``Exception`` object back to the client. We inspect the exception and construct a valid, serializable object that we can indeed send back to our clients. For that matter we defined an ``ErrorModel`` transport object and we simply populated it with details in the handler of this particular exception. This is a simplified version of what could be done. Perhaps for real production applications we may want to put a few more details in this error model.
+Since we are not using Java RMI as the serialization protocol for our services, we simply cannot send a Java ``Exception`` object back to the client. Instead we must inspect the exception object and construct a valid, serializable transport object that we can indeed send back to our clients. For that matter we defined an ``ErrorModel`` transport object and we simply populated it with details in the handler of this particular exception. This is a simplified version of what could be done. Perhaps for real production applications we may want to put a few more details in this error model.
 
 .. code-block:: java
 
@@ -630,7 +630,7 @@ Since we are not using Java RMI as the serialization protocol for our objects, w
     }
  }
 
-Finally, notice how the error handler code from the ``ExceptionHandlers`` from before treats any ``ValidationException`` as HTTP Status 400: Bad Request. That will allow the client to inspect the status code of the response and discover there was a client-side error in the payload it sent and that it was rejected by the server (i.e. our API).
+Finally, notice how the error handler code from the ``ExceptionHandlers`` from before treats any ``ValidationException`` as HTTP Status 400: Bad Request. That will allow the client to inspect the status code of the response and discover that the service rejected its payload because there is something wrong with it.
 
 Further Reading
 ---------------
