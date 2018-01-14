@@ -455,7 +455,7 @@ It is fundamental that value objects have proper implementations of ``equals``, 
 Use Java 8 Optional When Possible
 ---------------------------------
 
-A proper use of `Java 8 Optional <https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html>`_ or `Google Guava Optional <https://google.github.io/guava/releases/19.0/api/docs/com/google/common/base/Optional.html>`_ can alleviate a lot of mistakes related to null references. For example, in the following code the developer makes the mistake of not checking whether the reference returned by the method is null or not:
+A proper use of `Java 8 Optional <https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html>`_ or `Google Guava Optional <https://google.github.io/guava/releases/19.0/api/docs/com/google/common/base/Optional.html>`_ can alleviate a lot of mistakes related to null references. For example, in the following code the developer makes the mistake of not checking whether the reference returned by ``accountRepository.findAccountByNumber`` is null or not:
 
 .. code-block:: java
 
@@ -466,7 +466,7 @@ A proper use of `Java 8 Optional <https://docs.oracle.com/javase/8/docs/api/java
     account.withdrawMoney(withdrawal.getAmount()); //Uh oh! account may be null
  }
 
-However, if we change our repository method to return a Java 8 Optional object, it makes it harder for the developer to use the returned value without having to recognize the possibility that the optional is empty and it this case the developer does addresses the particular scenario by throwing an exception, something it was overlooked in the previous snippet.
+However, if we change our repository method to return an ``Optional`` object, it makes it harder for the developer to use the returned value without having to recognize the possibility that the optional is empty and it this case the developer does addresses the particular scenario by throwing an exception, something it was overlooked in the previous snippet.
 
 .. code-block:: java
 
@@ -477,6 +477,10 @@ However, if we change our repository method to return a Java 8 Optional object, 
                             .map(account -> account.withdrawMoney(withdrawal.getAmount()))
                             .orElseThrow(() -> new BankAccountNotFoundException(withdrawal.getAccountNumber()));
  }
+
+Quoting Google `Guava's article <https://github.com/google/guava/wiki/UsingAndAvoidingNullExplained#whats-the-point>`_ about the use of optional objects:
+
+ Besides the increase in readability that comes from giving null a name, the biggest advantage of Optional is its idiot-proof-ness. It forces you to actively think about the absent case if you want your program to compile at all, since you have to actively unwrap the Optional and address that case.
 
 Beware, though, that using Optional objects improperly is also very easy. The following articles might help you avoid common pitfalls:
 
