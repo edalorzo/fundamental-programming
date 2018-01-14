@@ -881,16 +881,96 @@ Regardless of the opinion we have on checked vs unchecked exceptions the main is
 
 The migration of applications using checked exceptions in Java 6 o 7 into Java 8 applications using lambdas, method references and stream API could easily become a nightmare of super verbosity.
 
-Since checked exceptions are part of the method signature, most of these methods are incompatible with Java 8 functional interfaces or other third-party API functional interfaces whose method signatures typically do not declare to throw any checked exceptions in particular.
+Since checked exceptions are part of the method signature, methods throwing checked exceptions are incompatible with most of the Java 8 functional interfaces or other with third-party API functional interfaces.
 
-If you are interested in knowing more, in the past I had answered a question in Stackoverflow explaining this and `several other shortcomings in the Java type system <https://stackoverflow.com/a/22919112/697630>`_ that would make developers life much harder if they had to deal with these checked exceptions every time they need to use them in lambda expression.
+If you are interested in knowing more, in the past I had answered a question in Stackoverflow explaining this and `several other shortcomings in the Java type system <https://stackoverflow.com/a/22919112/697630>`_ that would make developers lives much harder if they had to deal with checked exceptions every time they need to use them in lambda expression.
 
-The principles here is avoid checked exceptions and favor unchecked exceptions whe possible.
+The principle here is avoid checked exceptions and favor unchecked exceptions whe possible.
 
 Retryability: Transient vs Persistent Exceptions
 ------------------------------------------------
 
-TBD
+Some exceptions represent recoverable conditions (e.g. a ``QueryTimeoutException``) and some don't (e.g. ``DataViolationException``). When an exception condition is temporal, and we believe that if we try again we could probably succeed, we say that such exception is transient. On the other hand when the exceptional condition is permanent then we say such exception is persistent.
+
+The major point here is that transient exceptions are good candidates for retry blocks whereas persistent exceptions need to be handled differently, typically requiring some human intervention.
+
+This knowledge of the transitivity of exceptions becomes even more relevant in distributed systems where an exception can be serialized somehow and sent beyond the boundaries of the system. For example, if the client API receives an error reporting that a given HTTP endpoint failed to execute, how can the client know if the operation should be retried or not? It would pointless to retry if the condition for which it failed was permanent.
+
+When we design an exception hierarchy based on a good understanding of the business domain and the classical system integration problems, then the information of wether an exceptions represents a recoverable condition or not can be crucial to design good behaving clients.
+
+There are several strategies we could follow to indicate an exceptions is transient or not within our APIs:
+
+* We could define it as transient in the exception documentation (e.g. JavaDocs).
+* We could define a ``@TransientException`` annotation and add it to the exceptions.
+* We could define a marker interface or inherit from a ``TransientServiceException`` class.
+
+The Spring Framework follows the approach in the third option for its data access classes. All exceptions that inherit from `TransientDataAccessException`_ are considered transient and retryable in Spring.
+
+This plays rather well with the `Spring Retry`_ Framework. It becomes particularly simply to define a retry policy that retries any transient exceptions. Consider the following example:
+
+.. code-block:: java
+
+  @Override
+  public double withdrawMoney(WithdrawMoney withdrawal) throws InsufficientFundsException {
+     Objects.requireNonNull(withdrawal, "The withdrawal request must not be null");
+
+     //we may also configure this as a bean
+     RetryTemplate retryTemplate = new RetryTemplate();
+     SimpleRetryPolicy policy = new SimpleRetryPolicy(3, singletonMap(TransientDataAccessException.class, true), true);
+     retryTemplate.setRetryPolicy(policy);
+
+     //dealing with transient exceptions locally by retrying
+     return retryTemplate.execute(context -> {
+         try {
+             return accountRepository.findAccountByNumber(withdrawal.getAccountNumber())
+                                     .map(account -> account.withdrawMoney(withdrawal.getAmount()))
+                                     .orElseThrow(() -> new BankAccountNotFoundException(withdrawal.getAccountNumber()));
+         }
+         catch (DataAccessException cause) {
+             throw new SavingsAccountException(withdrawal.getAccountNumber(), cause);
+         }
+     });
+  }
+
+In the code above, if the DAO fails to retrieve a record from the database due to a query timeout, Spring would wrap that failure into a `QueryTimeoutException`_ which is also a `TransientDataAccessException`_.
+
+When send error models back to our clients we can also take advantage of knowing if a given exception is transient or not. This information let us tell the clients that they could retry the operation after certain back off period.
+
+.. code-block:: java
+
+  @ControllerAdvice
+  public class ExceptionHandlers {
+
+    private final BinaryExceptionClassifier transientClassifier = new BinaryExceptionClassifier(singletonMap(TransientDataAccessException.class, true), false);
+    {
+        transientClassifier.setTraverseCauses(true);
+    }
+
+    //..
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorModel> handle(SavingsAccountException ex) {
+        if(isTransient(ex)) {
+            //when transient, status code 503: Service Unavailable is sent
+            //and a backoff retry period of 5 seconds is suggested to the client
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                                 .header("Retry-After", "5000")
+                                 .body(new ErrorModel(ex.getMessage()));
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(new ErrorModel(ex.getMessage()));
+        }
+    }
+
+    private boolean isTransient(Throwable cause) {
+        return transientClassifier.classify(cause);
+    }
+
+ }
+
+The code above uses a ``BinaryExceptionClassifier``, which is part of the `Spring Retry`_ library, to determine if a given exception contains any transient exceptions in their causes and if so, categorizes that exception as transient. This predicate is used to determine what type of HTTP status code we send back to the client. If the exception is transient we send a ``503 Service Unavailable`` and provide a header ``Retry-After: 5000`` with the details of the backoff policy.
+
+Using this information, clients can decide whether it make sense to retry a given web service invocation and exactly how long they need to wait before retrying.
 
 Logging with Monitoring in Mind
 -------------------------------
@@ -917,3 +997,6 @@ Further Reading
 .. _Trouble with Checked Exceptions: http://www.artima.com/intv/handcuffs.html
 .. _The Exceptions Debate: https://www.ibm.com/developerworks/library/j-jtp05254/index.html
 .. _Does Java Need Checked Exceptions?: http://www.mindview.net/Etc/Discussions/CheckedExceptions
+.. _Spring Retry: https://github.com/spring-projects/spring-retry>
+.. _TransientDataAccessException: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/TransientDataAccessException.html
+.. _QueryTimeoutException: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/QueryTimeoutException.html
