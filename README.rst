@@ -537,7 +537,7 @@ Consider the following example:
     }
  }
 
-In the code above we're using Bean Validation to check that the user's DTO contains valid information. Any errors found in the DTOs is provided to the controller method in the ``BindingResult errors`` variable, from where the developer can extract all the details of what went wrong during the validation phase. It is very clear from the code above that if any validation errors are found, we'll never reach the service layer. This is where barrier is located.
+In the code above we're using `Bean Validation`_ to check that the user's DTO contains valid information. Any errors found in the DTO are provided through the ``BindingResult errors`` variable, from where the developer can extract all the details of what went wrong during the validation phase. It is very clear from the code above that if any validation errors are found, we'll never reach the service layer. This is where barrier is located.
 
 In order to make it easier for the developers to deal with this pattern, in the code above I simply wrap the ``BindingResult`` into a custom ``ValidationException`` which knows how to extract the validation error details.
 
@@ -584,6 +584,53 @@ In order to make it easier for the developers to deal with this pattern, in the 
 
  }
 
+HTTP Status Codes and Exception Serialization
+---------------------------------------------
+
+How should the controller layer deal with the exceptions? For example, in the code example above the ``ValidationException`` will be thrown when the payload is invalid. How should the controller deal with this?
+
+The are multiple ways to deal with this, but perhaps the simplest solution is to define a class annotate with ``@ControllerAdvice`` where we can place our exception handlers for any exception we know our controller and service layer may throw:
+
+.. code-block:: java
+
+ @ControllerAdvice
+ public class ExceptionHandlers extends ResponseEntityExceptionHandler {
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorModel> handle(ValidationException ex) {
+        return ResponseEntity.badRequest()
+                             .body(new ErrorModel(ex.getMessages()));
+    }
+
+    //...
+ }
+
+Since we are not using Java RMI as the serialization protocol for our objects, we simply cannot send a Java Exception object back to the client. We must serialize the error somehow in an object that we can ideed serialize and send back. For that matter we can define a ``ErrorModel`` transport object and we simply populated it with details in the handler of this particular exception. This is a simplified version of what could be done. Perhaps for real production applications we may want to put a few more details in this error model.
+
+.. code-block:: java
+
+ /**
+  * Data Transport Object to represent errors in JSON
+  */
+ public class ErrorModel {
+
+    private final List<String> messages;
+
+    @JsonCreator
+    public ErrorModel(@JsonProperty("messages") List<String> messages) {
+        this.messages = messages;
+    }
+
+    public ErrorModel(String message) {
+        this.messages = Collections.singletonList(message);
+    }
+
+    public List<String> getMessages() {
+        return messages;
+    }
+ }
+
+Finally, notice how the error handler code from the ``ExceptionHandlers`` from before treats any ``ValidationException`` as HTTP Status 400: Bad Request. That will allow the client to inspect the status code of the response and discover there was a client-side error in the payload it sent and that it was rejected by the server (i.e. our API).
 
 Further Reading
 ---------------
@@ -595,9 +642,11 @@ Further Reading
 * `Data Transfer Object`_
 * `Code Complete`_
 * `Effective Java`_
+* `Bean Validation`_
 
 .. _Code Complete: https://www.amazon.com/Code-Complete-Practical-Handbook-Construction/dp/0735619670
 .. _Effective Java: https://www.amazon.com/Effective-Java-3rd-Joshua-Bloch/dp/0134685997/
 .. _Design By Contract: https://www.cs.umd.edu/class/fall2002/cmsc214/Projects/P1/proj1.contract.html
 .. _Objects Should Be Immutable: http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html
 .. _Data Transfer Object: https://martinfowler.com/eaaCatalog/dataTransferObject.html
+.. _Bean Validation: http://beanvalidation.org
