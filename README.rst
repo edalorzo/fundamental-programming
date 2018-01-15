@@ -1254,6 +1254,11 @@ In general I tend to prefer this approach better than using bean validation. Its
 Testing Components
 ------------------
 
+In the following section I present some ideas of different aspects that are worth testing for every type of component.
+
+Transport and Value Objects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 For **immutable transport objects** and **value object**, I recommend **at least** testing the preconditions of the constructor, the validity of the equals and hascCode implementations and that serialization/deserialization works properly.
 
 .. code-block:: java
@@ -1315,6 +1320,9 @@ For **immutable transport objects** and **value object**, I recommend **at least
          }
      }
  }
+
+The Service Layer
+^^^^^^^^^^^^^^^^^
 
 For your **service layer**, you may want to use a library like Mockito to mock your data access layer and just focus on what should happen in the service layer. Make sure to test not only valid scenarios, but also invalid scenarios and attempts to violate preconditions.
 
@@ -1452,7 +1460,10 @@ For your **service layer**, you may want to use a library like Mockito to mock y
 
  }
 
-The controller layer represents a contract between our application and our clients and we'd do well to test that those contracts are properly satisfied. The Spring Framework already provides very useful testing APIs that we can exploit for this purposes.
+The Controller Layer
+^^^^^^^^^^^^^^^^^^^^
+
+The **controller layer** represents a contract between our application and our clients and we'd do well to test that those contracts are properly satisfied. The Spring Framework already provides very useful testing APIs that we can exploit for this purposes.
 
 .. code-block:: java
 
