@@ -1226,7 +1226,7 @@ To deal with the possibility of a deserialization failure of our now self-defens
 
     //since we add nullability and constraints checks to our DTOs in their constructors
     //these might fail even before reaching the Bean Validation phase, so by adding this
-    //handler we make sure to respond with an appropriate when that occurs.
+    //handler we make sure to respond with an appropriate error model when that occurs.
 
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
