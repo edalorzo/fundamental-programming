@@ -743,7 +743,7 @@ One of such places where we'll want to handle this exception in our ``ExceptionH
     //...
  }
 
-Also, it also worth noticing that the ``getMessage()`` method of ``InsufficientFundsException`` was overridden in this implementation. This contents of this message is what our log stack traces will display if we decide to log this particular exception. Therefore it is of paramount importance that we always override this method in our exceptions classes such that those valuable contextual details they contain are also rendered in our logs. It is in those logs where those details will most likely make a difference where we are trying to diagnose a problem with our system:
+Also, it also worth noticing that the ``getMessage()`` method of ``InsufficientFundsException`` was overridden in this implementation. The contents of this message is what our log stack traces will display if we decide to log this particular exception. Therefore it is of paramount importance that we always override this method in our exceptions classes such that those valuable contextual details they contain are also rendered in our logs. It is in those logs where those details will most likely make a difference when we are trying to diagnose a problem with our system:
 
 ::
 
@@ -887,7 +887,7 @@ Since checked exceptions are part of the method signature, methods throwing chec
 
 If you are interested in knowing more, in the past I had answered a question in Stackoverflow explaining this and `several other shortcomings in the Java type system <https://stackoverflow.com/a/22919112/697630>`_ that would make developers lives much harder if they had to deal with checked exceptions every time they need to use them in lambda expression.
 
-The principle here is avoid checked exceptions and favor unchecked exceptions whe possible.
+The principle here is avoid checked exceptions and favor unchecked exceptions when possible.
 
 Retryability: Transient vs Persistent Exceptions
 ------------------------------------------------
