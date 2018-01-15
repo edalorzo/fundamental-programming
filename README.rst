@@ -292,7 +292,7 @@ This implies validating all public and protected methods and constructors. Consi
 
 Since private methods are directly accessed from public or protected methods, then there is no need to do any validation there. If all public interfaces are checked to be valid then private methods can assume any parameters passed to them already satisfy the required preconditions.
 Something similar could be said of package protected methods, since these can only be accessed from withing a given package, it is expected that they are under the control of the API implementor and therefore
-the implementor th power to determine whether the data is valid within the confines of that package.
+the implementor has the power to determine whether the data is valid within the confines of that package.
 
 This idea is compatible with the barricade principle.
 
@@ -468,7 +468,7 @@ A proper use of `Java 8 Optional <https://docs.oracle.com/javase/8/docs/api/java
     account.withdrawMoney(withdrawal.getAmount()); //Uh oh! account may be null
  }
 
-However, if we change our repository method to return an ``Optional`` object, it makes it harder for the developer to use the returned value without having to recognize the possibility that the optional is empty and, it this case, force the developer to address that particular scenario by throwing an exception. Something it was overlooked in the previous snippet.
+However, if we change our repository method to return an ``Optional`` object, it makes it harder for the developer to use the returned value without having to recognize the possibility that the optional might be empty and, it this case, force the developer to address that particular scenario by throwing an exception. Something that was overlooked in the previous snippet.
 
 .. code-block:: java
 
