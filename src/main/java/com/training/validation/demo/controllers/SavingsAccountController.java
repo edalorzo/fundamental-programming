@@ -21,7 +21,7 @@ public class SavingsAccountController {
     private final BankAccountService accountService;
 
     @Autowired
-    public SavingsAccountController(SavingsAccountService accountService) {
+    public SavingsAccountController(BankAccountService accountService) {
         this.accountService = accountService;
     }
 

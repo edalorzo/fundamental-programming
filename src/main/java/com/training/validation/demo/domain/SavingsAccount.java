@@ -28,7 +28,7 @@ public class SavingsAccount implements BankAccount {
     public SavingsAccount(AccountNumber accountNumber) {
         Objects.requireNonNull(accountNumber, "The account number must not be null");
         this.accountNumber = accountNumber;
-        this.balance = 0.0;
+        this.balance = 100.0;
     }
 
     @Override

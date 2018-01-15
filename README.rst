@@ -1452,8 +1452,140 @@ For your **service layer**, you may want to use a library like Mockito to mock y
 
  }
 
+The controller layer represents a contract between our application and our clients and we'd do well to test that those contracts are properly satisfied. The Spring Framework already provides very useful testing APIs that we can exploit for this purposes.
+
+.. code-block:: java
+
+ @RunWith(SpringRunner.class)
+ @WebMvcTest(controllers = SavingsAccountController.class)
+ public class SavingsAccountControllerTest {
+
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final AccountNumber accountNumber = new AccountNumber("1-234-567-890");
+
+    @MockBean
+    private BankAccountService bankAccountService;
+
+    @Autowired
+    private MockMvc mvc;
 
 
+    @Test
+    public void testSavingMoney() throws Exception {
+
+        SaveMoney savings = new SaveMoney(accountNumber, 100.0);
+
+        given(bankAccountService.saveMoney(savings))
+                .willReturn(savings.getAmount());
+
+        RequestBuilder request = put("/accounts/save")
+                .accept(APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
+                .content(getJsonString(savings));
+
+        mvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$.accountNumber", equalTo("1-234-567-890")))
+                .andExpect(jsonPath("$.balance", equalTo(100.0)))
+                .andDo(print());
+
+    }
+
+    @Test
+    public void testSavingsWithInvalidAmount() throws Exception {
+
+        RequestBuilder request = put("/accounts/save")
+                .accept(APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
+                .content("{\"accountNumber\":\"1-234-567-890\", \"amount\": -100}");
+
+        mvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$.messages[0]", equalTo("The amount must be > 0: -100.0")))
+                .andDo(print());
+
+    }
+
+    @Test
+    public void testSavingsWithInvalidAccountNumber() throws Exception {
+
+        RequestBuilder request = put("/accounts/save")
+                .accept(APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
+                .content("{\"accountNumber\": null, \"amount\": 100}");
+
+        mvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$.messages[0]", equalTo("The account number must not be null")))
+                .andDo(print());
+
+    }
+
+
+    @Test
+    public void testWithdrawingMoney() throws Exception {
+
+        WithdrawMoney withdrawal = new WithdrawMoney(accountNumber, 100.0);
+
+        given(bankAccountService.withdrawMoney(withdrawal))
+                .willReturn(10.0);
+
+        RequestBuilder request = put("/accounts/withdraw")
+                .accept(APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
+                .content(getJsonString(withdrawal));
+
+        mvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$.accountNumber", equalTo("1-234-567-890")))
+                .andExpect(jsonPath("$.balance", equalTo(10.0)))
+                .andDo(print());
+
+    }
+
+
+    @Test
+    public void testWithdrawalWithInvalidAmount() throws Exception {
+
+        RequestBuilder request = put("/accounts/withdraw")
+                .accept(APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
+                .content("{\"accountNumber\":\"1-234-567-890\", \"amount\": -100}");
+
+        mvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$.messages[0]", equalTo("The amount must be > 0: -100.0")))
+                .andDo(print());
+
+    }
+
+    @Test
+    public void testWithdrawalWithInvalidAccountNumber() throws Exception {
+
+        RequestBuilder request = put("/accounts/withdraw")
+                .accept(APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
+                .content("{\"accountNumber\": null, \"amount\": 100}");
+
+        mvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$.messages[0]", equalTo("The account number must not be null")))
+                .andDo(print());
+
+    }
+
+
+    private String getJsonString(Object source) throws Exception {
+        return mapper.writeValueAsString(source);
+    }
+
+ }
 
 
 
