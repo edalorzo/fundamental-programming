@@ -240,6 +240,8 @@ The following quote from `Code Complete`_ highlights the main principle here:
 
  Check the values of all routine input parameters. Checking the values of routine input parameters is essentially the same as checking data that comes from an external source, except that the data comes from another routine instead of from an external interface.
 
+I also recommend reading the _`Input Validation Cheat Sheet`_.
+
 Validate Public and Protected Methods
 -------------------------------------
 
@@ -1611,12 +1613,13 @@ Further Reading
 * `Java SE 8 Optional, a pragmatic approach <http://blog.joda.org/2015/08/java-se-8-optional-pragmatic-approach.html>`_
 * `Objects Should Be Immutable`_
 * `Data Transfer Object`_
-* `Trouble with Checked Exceptions`_ ,
+* `Trouble with Checked Exceptions`_ 
 * `The Exceptions Debate`_
 * `Does Java Need Checked Exceptions?`_
 * `Code Complete`_
 * `Effective Java`_
 * `Bean Validation`_
+* _`Input Validation Cheat Sheet`_
 
 .. _Code Complete: https://www.amazon.com/Code-Complete-Practical-Handbook-Construction/dp/0735619670
 .. _Effective Java: https://www.amazon.com/Effective-Java-3rd-Joshua-Bloch/dp/0134685997/
@@ -1630,3 +1633,4 @@ Further Reading
 .. _Spring Retry: https://github.com/spring-projects/spring-retry>
 .. _TransientDataAccessException: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/TransientDataAccessException.html
 .. _QueryTimeoutException: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/QueryTimeoutException.html
+.. _Input Validation Cheat Sheet: https://www.owasp.org/index.php/Input_Validation_Cheat_Sheet
