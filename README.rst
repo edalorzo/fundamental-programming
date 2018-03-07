@@ -491,6 +491,7 @@ Beware, though, that using Optional objects improperly is also very easy. The fo
 * `Java SE 8 Optional, a pragmatic approach <http://blog.joda.org/2015/08/java-se-8-optional-pragmatic-approach.html>`_ by Stephen Colebourne (creator of Joda Time and JDK 8 Date/Time API).
 * `Should Java 8 getters return optional type? <https://stackoverflow.com/a/26328555/697630>`_ answered by Brian Goetz (lead of Java 8 project at Oracle)
 * `Should I use Java8/Guava Optional for every method that may return null? <https://stackoverflow.com/a/18699418/697630>`_ which I answered myself a few years ago.
+* `Effective Java`_, Item 55: Return Optionals Judiciously.
 
 Spring Controller Barricade
 ---------------------------
