@@ -293,7 +293,7 @@ This implies validating all public and protected methods and constructors. Consi
  }
 
 Since private methods are directly accessed from public or protected methods, then there is no need to do any validation there. If all public interfaces are checked to be valid then private methods can assume any parameters passed to them already satisfy the required preconditions.
-Something similar could be said of package protected methods, since these can only be accessed from withing a given package, it is expected that they are under the control of the API implementor and therefore
+Something similar could be said of package protected methods, since these can only be accessed from within a given package, it is expected that they are under the control of the API implementor and therefore
 the implementor has the power to determine whether the data is valid within the confines of that package.
 
 This idea is compatible with the barricade principle.
@@ -339,7 +339,7 @@ We can understand a few exceptions to doing input checks on parameters when it c
  }
 
 
-In the code above I could understand an omission of a validation on the ``accountRepository`` argument, because we're using Spring to inject a value here and the ``Autowrired`` annotation already requires that a value is passed here or an exception will be thrown during the container initialization. Obviously adding a nullability check wouldn't do any harm here and I would say it is required if the class is expected to be instantiated outside the Spring container for other purposes. However, if it is intended only to be used withing the Spring container, I might omit the validation since I know the container would do the corresponding nullability checks here when it starts.
+In the code above I could understand an omission of a validation on the ``accountRepository`` argument, because we're using Spring to inject a value here and the ``Autowrired`` annotation already requires that a value is passed here or an exception will be thrown during the container initialization. Obviously adding a nullability check wouldn't do any harm here and I would say it is required if the class is expected to be instantiated outside the Spring container for other purposes. However, if it is intended only to be used within the Spring container, I might omit the validation since I know the container would do the corresponding nullability checks here when it starts.
 
 However, you may still want to validate that certain injected values are correct, particularly if they come from configuration files that can be wrongfully edited. For example:
 
