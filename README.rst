@@ -247,7 +247,7 @@ Validate Public and Protected Methods
 
 An object's public and protected methods are its way to interact with the world. From the point of view of the API designer, any parameters passed by the API user cannot be trusted since the API users could easily make a mistake or have a bug in their code. Therefore the input provided by the API users cannot be trusted and all public and protected methods *must* validate their input.
 
-The book `Effective Java`_ has a section dedicated on how to properly use exceptions (which I encourage everyone to read). The following is a valuable quote from that book:
+The book `Effective Java`_ has a section on how to properly use exceptions (which I encourage everyone to read). The following is a valuable quote from that book:
 
  Use runtime exceptions to indicate programming errors. The great majority of runtime exceptions indicate precondition violations. A precondition violation is simply a failure by the client of an API to adhere to the contract established by the API specification. For example, the contract for array access specifies that the array index must be between zero and the array length minus one. ``ArrayIndexOutOfBoundsException`` indicates that this precondition was violated.
 
