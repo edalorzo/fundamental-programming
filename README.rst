@@ -65,7 +65,7 @@ A practice that we could follow is that of documenting the method contracts, exp
      * At any point in time the final balance of the saving accounts may
      * never be smaller than 0.
      *
-     * @param amount - the amount of meny to withdraw from the account.
+     * @param amount - the amount of money to withdraw from the account.
      * @return the balance in the account after the withdrawal.
      * @throws IllegalArgumentException if {@code amount} <= 0.
      * @throws InsufficientFundsException if the current {@code balance} is smaller than {@code amount}
