@@ -4,7 +4,7 @@ Fundamental Programming Principles
 .. contents:: Table of Contents
   :local:
 
-This project was intended as an exploration and demonstration of fundamental programming principles in the following areas:
+This **project** was intended as an exploration and demonstration of fundamental programming principles in the following areas:
 
 - Input Validation
 - Proper use of exceptions
