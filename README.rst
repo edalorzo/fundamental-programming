@@ -21,7 +21,7 @@ An excellent place to start is in Chapter 8 of the book `Code Complete`_, under 
 
   By today's standards, "garbage in, garbage out" is the mark of a sloppy, nonsecure program.
 
-Note: in Code Complete, "defensive programming" is more closer to the idea of `Design by Contract <http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf>`_ published by Bertran Meyer back in 1992, and I recommend taking time to read his paper as well.
+Note: in Code Complete, "defensive programming" is more closer to the idea of `Design by Contract`_ published by Bertran Meyer back in 1992, and I recommend taking time to read his paper as well.
 
 Robustness vs. Correctness
 -------------------------
@@ -39,7 +39,7 @@ Balancing these two principles is vital while designing applications and coding 
 Design By Contract
 ------------------
 
-Bertran Meyer published a great article back in 1992 on the idea of `Design by Contract <http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf>`_.
+Bertran Meyer published a great article back in 1992 on the idea of `Design by Contract`_.
 
 Functions or methods are the fundamental building blocks of any software application, and we should strive to `design them by contract <http://wiki.c2.com/?DesignByContract>`_. This implies that a method must guarantee all its preconditions. During the execution of the code must ensure its invariants are held, and finally, when finished, it must guarantee a number of postconditions. Failure to do any of these should be signaled immediately by throwing an exception.
 
@@ -1635,3 +1635,4 @@ Further Reading
 .. _TransientDataAccessException: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/TransientDataAccessException.html
 .. _QueryTimeoutException: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/dao/QueryTimeoutException.html
 .. _Input Validation Cheat Sheet: https://www.owasp.org/index.php/Input_Validation_Cheat_Sheet
+.. _Design by Contract: http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf
