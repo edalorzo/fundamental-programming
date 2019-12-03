@@ -1609,7 +1609,7 @@ The **controller layer** represents a contract between our application and our c
 Further Reading
 ---------------
 
-* `Design By Contract`_
+* `Design by Contract`_
 * `Null References: The Billion Dollar Mistake <https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare>`_
 * `Java SE 8 Optional, a pragmatic approach <http://blog.joda.org/2015/08/java-se-8-optional-pragmatic-approach.html>`_
 * `Objects Should Be Immutable`_
