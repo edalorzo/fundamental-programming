@@ -21,9 +21,7 @@ An excellent place to start is in Chapter 8 of the book `Code Complete`_, under 
 
   By today's standards, "garbage in, garbage out" is the mark of a sloppy, nonsecure program.
 
-Interestingly, the term "defensive programming" is sometimes associated with a not so desirable trait: this kind of code in which you never know if a given reference is supposed to be null or not, or where you never assume you can trust anything in your program. You're forced to revalidate everything, over and over again. A piece of code written this way is one in which you dramatically increase the complexity and severely hamper the readability of your source code because you fear that every step that you give is about to activate a landmine. 
-
-In Code Complete, however, "defensive programming" is more closer to the idea of `Design by Contract <http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf>`_ published by Bertran Meyer back in 1992, and I recommend taking time to read his paper as well.
+Note: in Code Complete, "defensive programming" is more closer to the idea of `Design by Contract <http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf>`_ published by Bertran Meyer back in 1992, and I recommend taking time to read his paper as well.
 
 Robustness vs. Correctness
 -------------------------
@@ -40,6 +38,8 @@ Balancing these two principles is vital while designing applications and coding 
 
 Design By Contract
 ------------------
+
+The best place to start to understand this idea is by reading Bertran Meyer's article on `Design by Contract <http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf>`.
 
 Functions or methods are the fundamental building blocks of any software application, and we should strive to `design them by contract <http://wiki.c2.com/?DesignByContract>`_. This implies that a method must guarantee all its preconditions. During the execution of the code must ensure its invariants are held, and finally, when finished, it must guarantee a number of postconditions. Failure to do any of these should be signaled immediately by throwing an exception.
 
