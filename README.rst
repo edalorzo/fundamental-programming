@@ -4,24 +4,28 @@ Fundamental Programming Principles
 .. contents:: Table of Contents
   :local:
 
-This project was intended as an exploration and demonstration of fundamental programming principles in the following areas:
+This project explores and demonstrates fundamental programming principles in the following areas:
 
 - Input Validation
 - Proper use of exceptions
-- Fundamental Logging
+- Logging
 
 Defensive Programming
 ---------------------
 
-A good place to start is in Chapter 8 of the book `Code Complete`_, under Defensive Programming:
+An excellent place to start is in Chapter 8 of the book `Code Complete`_, under Defensive Programming:
 
-  In school you might have heard the expression, "Garbage in, garbage out." That expression is essentially software development's version of caveat emptor: let the user beware.
+  In school, you might have heard the expression, "Garbage in, garbage out." That expression is essentially software development's version of caveat emptor: let the user beware.
 
   For production software, garbage in, garbage out isn't good enough. A good program never puts out garbage, regardless of what it takes in. A good program uses "garbage in, nothing out," "garbage in, error message out," or "no garbage allowed in" instead.
 
   By today's standards, "garbage in, garbage out" is the mark of a sloppy, nonsecure program.
 
-Robustness vs Correctness
+Interestingly, the term "defensive programming" is sometimes associated with a not so desirable trait: this kind of code in which you never know if a given reference is supposed to be null or not, or where you never assume you can trust anything in your program. You're forced to revalidate everything, over and over again. A piece of code written this way is one in which you dramatically increase the complexity and severely hamper the readability of your source code because you fear that every step that you give is about to activate a landmine. 
+
+In Code Complete, however, "defensive programming" is more closer to the idea of `Design by Contract <http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf>`_ published by Bertran Meyer back in 1992, and I recommend taking time to read his paper as well.
+
+Robustness vs. Correctness
 -------------------------
 
 There are two major principles that we must balance when designing and implementing defensive code. The following is another quote from the same book:
@@ -30,20 +34,20 @@ There are two major principles that we must balance when designing and implement
 
   Safety-critical applications tend to favor correctness to robustness. It is better to return no result than to return a wrong result. The radiation machine is a good example of this principle.
 
-  Consumer applications tend to favor robustness to correctness. Any result whatsoever is usually better than the software shutting down. The word processor I'm using occasionally displays a fraction of a line of text at the bottom of the screen. If it detects that condition, do I want the word processor to shut down? No. I know that the next time I hit Page Up or Page Down, the screen will refresh and the display will be back to normal.
+  Consumer applications tend to favor robustness to correctness. Any result whatsoever is usually better than the software shutting down. The word processor I'm using occasionally displays a fraction of a line of text at the bottom of the screen. If it detects that condition, do I want the word processor to shut down? No. I know that the next time I hit Page Up or Page Down, the screen will refresh, and the display will be back to normal.
 
 Balancing these two principles is vital while designing applications and coding software components.
 
 Design By Contract
 ------------------
 
-Functions or methods are the fundamental building blocks of any software application and we should strive to `design them by contract <http://wiki.c2.com/?DesignByContract>`_. This implies that a method must guarantee all its preconditions. During the execution of the code must ensure its invariants are held and finally, when finished, it must guarantee a number of postconditions. Failure to do any of these should be signaled immediately by throwing an exception.
+Functions or methods are the fundamental building blocks of any software application, and we should strive to `design them by contract <http://wiki.c2.com/?DesignByContract>`_. This implies that a method must guarantee all its preconditions. During the execution of the code must ensure its invariants are held, and finally, when finished, it must guarantee a number of postconditions. Failure to do any of these should be signaled immediately by throwing an exception.
 
 * **Precondition**:  a condition that must be true of the parameters of a method and/or data members, if the method is to behave correctly, prior to running the code in the method.
 * **Postcondition**: a condition that is true after running the code in a method.
 * **Class Invariant**: a condition that is true before and after running the code in a method (except constructors and destructors).
 
-Therefore a method contract states what input the method receives, and establishes a set of constraints or preconditions that such input must satisfy. The method contract also states what the method does, in other words what task is logically performed by the method and what results can be expected, what side effects should have happened, etc. There is also a number of postconditions that a method contract must guarantee upon successful completion of the method, in other words, guaranteed expectations about the final state of the world after the method is done running and what it should return as a result.
+Therefore a method contract states what input the method receives and establishes a set of constraints or preconditions that such input must satisfy. The method contract also states what the method does. In other words what task is logically performed by the method and what results can be expected, what side effects should have happened, etc. There is also a number of postconditions that a method contract must guarantee upon successful completion of the method. In other words, guaranteed expectations about the final state of the world after the method is done running and what it should return as a result.
 
 Any deviation of the contract must throw an exception or signal the problem somehow: make it obvious that either the preconditions were not satisfied, or the postconditions could not be met for any reason.
 
@@ -86,16 +90,16 @@ A practice that we could follow is that of documenting the method contracts, exp
     double saveMoney(double amount);
  }
 
-The implementation class of this interface then must satisfy everything stated in the contract of its methods and our test classes must strive to satisfy those contracts. Another great benefit of having this contracts stated is that just by writing them we put ourselves in the mindset of thinking what could go wrong, which is always a good start to write defensive, robust software. Finally, once the contract is clearly stated, developers can easily write unit tests for that contract, even before the interface have been properly implemented.
+The implementation class of this interface then must satisfy everything stated in the contract of its methods, and our test classes must strive to fulfill those contracts. Another great benefit of having these contracts stated is that just by writing them, we put ourselves in the mindset of thinking what could go wrong, which is always a good start to write defensive, robust software. Finally, once the contract is clearly stated, developers can easily write unit tests for that contract, even before the interface have been properly implemented.
 
-Consider another example: let's say you are defining  a ``Fraction`` class to represent that mathematical concept. You may need to follow a contract with the following rules:
+Consider another example: let's say you are defining a ``Fraction`` class to represent that mathematical concept. You may need to follow a contract with the following rules:
 
 * **Precondition**: the denominator must never be ``0``.
 * **Invariant**: fractions will be kept in reduced form (i.e. ``2/3`` instead of ``6/9``, ``6`` instead of ``6/1``, ``0`` instead of ``0/2``)
 * **Postcondition**: a fraction with a denominator of ``1`` will be represented as a whole number, not as a fraction (i.e. ``2`` instead of ``2/1``).
 * **Postcondition**: a numerator of 0 will be represented as the whole number ``0``, not as a fraction (i.e. ``0`` instead of ``0/2``).
 
-The **principle here** is that you may want to do the effort of documenting your interface contracts such that developers creating implementation make sure the contract holds at all times in their implementation and in their unit tests.
+The **principle here** is that you may want to make the effort of documenting your interface contracts such that developers creating implementation make sure the contract holds at all times in their implementation and their unit tests.
 
 Once you have a contract properly defined you can **write tests to verify your contracts**:
 
@@ -153,12 +157,12 @@ Once you have a contract properly defined you can **write tests to verify your c
     }
  }
 
-If you're following TDD style, you need not have implemented the ``SavingsAccount`` class and initially all tests would fail and gradually start passing as the methods are implemented properly one by one in the class.
+If you're following TDD style, you need not have implemented the ``SavingsAccount`` class, and initially, all tests would fail and gradually start passing as the methods are implemented properly one by one in the class.
 
 Beware of Constructor Parameters
 --------------------------------
 
-Perhaps the most classical example of validation omission is the failure to properly validate the nullability of a method argument, particularly when it happens in a constructor. For example, consider this class:
+Perhaps the most classic example of validation omission is the failure to properly validate the nullability of a method argument, mainly when it happens in a constructor. For example, consider this class:
 
 .. code-block:: java
 
@@ -186,27 +190,27 @@ And ``someOtherObj`` will store this ``foo`` instance for a while, waiting for s
   foo.getBar().getName(); //NullPointerException
 
 
-The problem here is that the spatial (where) and temporal (when) locations of the exception thrown here are very far away from the source of the problem (i.e. the constructor above). No wonder why Tony Hoare called his invention of null references `a billion dollars mistake <https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare>`_. However, this temporality and spatiality issue may happen with other forms of unvalidated data.
+The problem here is that the spatial (where) and temporal (when) locations of the exception thrown here are very far away from the source of the problem (i.e., the constructor above). No wonder why Tony Hoare called his invention of null references `a billion dollars mistake <https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare>`_. However, this temporality and spatiality issue may happen with other forms of unvalidated data.
 
-To make matters worse, in a distributed system, the instance of ``Foo`` may have been even serialized and passed to other systems, and it could now be running in other machines, perhaps in totally different environments and even programming languages. So these type of problems can be infectious and propagate to other parts of our systems. Tracking the source of original failure in that case could be quite tricky.
+To make matters worse, in a distributed system, the instance of ``Foo`` may have been even serialized and passed to other systems, and it could now be running in other machines, perhaps in totally different environments and even programming languages. So these types of problems can be infectious and propagate to other parts of our systems. Tracking the source of the original failure, in that case, could be quite tricky.
 
 So, the key insights here are:
 
 1. Fail as fast and as soon as possible.
 2. Avoid accepting invalid data at all costs (no garbage in).
-3. Above all, DTOs must be bullet proof since they traverse system boundaries and can be infectious.
-4. Failure to accept invalid data not only makes your system better, it also makes better clients.
+3. Above all, DTOs must be bulletproof since they traverse system boundaries and can be infectious.
+4. Failure to accept invalid data not only makes your system better, but it also makes better clients.
 
 What Sort of Things Need Validation
 -----------------------------------
 
 - Nullability checks.
-- Domain business rules (e.g. an order must have payments)
+- Domain business rules (e.g., an order must have payments)
 - Number constraints:
 
   * What is the valid range of values in the number? (e.g. ``1 <= hour <= 12``)
-  * Can it be negative? (e.g. un-receive quantity)
-  * Can it be zero? (e.g. inventory stock)
+  * Can it be negative? (e.g., un-receive quantity)
+  * Can it be zero? (e.g., inventory stock)
   * Can this number overflow or underflow? (e.g. ``Integer.MAX_VALUE + 1``)
   * Is the number so big that it should be a ``BigInteger`` or ``BigDecimal``?
   * If the number cannot be null, use primitive types.
@@ -214,21 +218,21 @@ What Sort of Things Need Validation
 
 - String constraints:
 
-  * Does the string must satisfy a specific pattern (i.e. regex)?.
+  * Does the string must satisfy a specific pattern (i.e., regex)?.
   * For other open strings, does the string have a maximum capacity?.
   * If the string is going to be stored in a given database field, does the string fits in that field?.
 
 - Collection and arrays constraints:
 
   * Collections must never be null, initialize them to empty collections
-  * Can the collection be empty (e.g. order items)
+  * Can the collection be empty (e.g., order items)
   * Can any of the items in the collection be null?
   * Can the collection be subject to unsafe publication?
   * Can you expose the collection only through a read-only interface like ``Iterable``, ``Iterator`` or an unmodifiable collection?
 
 - Immutable Objects:
 
-  * Are there any getters doing unsafe publication of mutable members?
+  * Are there any getters doing the unsafe publication of mutable members?
 
 - Mutable Objects:
 
@@ -236,7 +240,7 @@ What Sort of Things Need Validation
 
 The following quote from `Code Complete`_ highlights the main principle here:
 
- Check the values of all data from external sources. When getting data from a file, a user, the network, or some other external interface, check to be sure that the data falls within the allowable range. Make sure that numeric values are within tolerances and that strings are short enough to handle. If a string is intended to represent a restricted range of values (such as a financial transaction ID or something similar), be sure that the string is valid for its intended purpose; otherwise reject it. If you're working on a secure application, be especially leery of data that might attack your system: attempted buffer overflows, injected SQL commands, injected HTML or XML code, integer overflows, data passed to system calls, and so on.
+ Check the values of all data from external sources. When getting data from a file, a user, the network, or some other external interface, check to be sure that the data falls within the allowable range. Make sure that numeric values are within tolerances and that strings are short enough to handle. If a string is intended to represent a restricted range of values (such as a financial transaction ID or something similar), be sure that the string is valid for its intended purpose; otherwise, reject it. If you're working on a secure application, be especially leery of data that might attack your system: attempted buffer overflows, injected SQL commands, injected HTML or XML code, integer overflows, data passed to system calls, and so on.
 
  Check the values of all routine input parameters. Checking the values of routine input parameters is essentially the same as checking data that comes from an external source, except that the data comes from another routine instead of from an external interface.
 
@@ -245,13 +249,13 @@ I also recommend reading the `Input Validation Cheat Sheet`_.
 Validate Public and Protected Methods
 -------------------------------------
 
-An object's public and protected methods are its way to interact with the world. From the point of view of the API designer, any parameters passed by the API user cannot be trusted since the API users could easily make a mistake or have a bug in their code. Therefore the input provided by the API users cannot be trusted and all public and protected methods *must* validate their input.
+An object's public and protected methods are its way of interacting with the world. From the point of view of the API designer, any parameters passed by the API user cannot be trusted since the API users could easily make a mistake or have a bug in their code. Therefore the input provided by the API users cannot be trusted, and all public and protected methods *must* validate their input.
 
 The book `Effective Java`_ has a section on how to properly use exceptions (which I encourage everyone to read). The following is a valuable quote from that book:
 
- Use runtime exceptions to indicate programming errors. The great majority of runtime exceptions indicate precondition violations. A precondition violation is simply a failure by the client of an API to adhere to the contract established by the API specification. For example, the contract for array access specifies that the array index must be between zero and the array length minus one. ``ArrayIndexOutOfBoundsException`` indicates that this precondition was violated.
+ Use runtime exceptions to indicate programming errors. The vast majority of runtime exceptions report precondition violations. A precondition violation is simply a failure by the client of an API to adhere to the contract established by the API specification. For example, the contract for array access specifies that the array index must be between zero and the array length minus one. ``ArrayIndexOutOfBoundsException`` indicates that this precondition was violated.
 
-This implies validating all public and protected methods and constructors. Consider this example of a data transport objects (DTO).
+This implies validating all public and protected methods and constructors. Consider this example of data transport objects (DTO).
 
 .. code-block:: java
 
@@ -292,7 +296,7 @@ This implies validating all public and protected methods and constructors. Consi
     }
  }
 
-Since private methods are directly accessed from public or protected methods, then there is no need to do any validation there. If all public interfaces are checked to be valid then private methods can assume any parameters passed to them already satisfy the required preconditions.
+Since private methods are directly accessed from public or protected methods, then there is no need to do any validation there. If all public interfaces are checked to be valid, then private methods can assume any parameters passed to them already satisfy the required preconditions.
 Something similar could be said of package protected methods, since these can only be accessed from within a given package, it is expected that they are under the control of the API implementor and therefore
 the implementor has the power to determine whether the data is valid within the confines of that package.
 
@@ -311,17 +315,17 @@ Once more `Code Complete`_ has great advice under Barricade Your Program to Cont
 
  Another way of thinking about this approach is as an operating-room technique. Data is sterilized before it's allowed to enter the operating room. Anything that's in the operating room is assumed to be safe. The key design decision is deciding what to put in the operating room, what to keep out, and where to put the doors—which routines are considered to be inside the safety zone, which are outside, and which sanitize the data. The easiest way to do this is usually by sanitizing external data as it arrives, but data often needs to be sanitized at more than one level, so multiple levels of sterilization are sometimes required.
 
- Convert input data to the proper type at input time. Input typically arrives in the form of a string or number. Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto an enumerated type like ``Color_Red``, ``Color_Green``, and ``Color_Blue``. Carrying data of questionable type for any length of time in a program increases complexity and increases the chance that someone can crash your program by inputting a color like "Yes." Convert input data to the proper form as soon as possible after it's input.
+ Convert input data to the proper type at input time. Input typically arrives in the form of a string or number. Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto a boolean type like "yes" or "no." Sometimes the value will map onto an enumerated type like ``Color_Red``, ``Color_Green``, and ``Color_Blue``. Carrying data of questionable type for any length of time in a program increases complexity. It increases the chance that someone can crash your program by inputting a color like "Yes." Convert input data to the proper form as soon as possible after it's input.
 
-The principle here is not to trust any external sources of data, and from the perspective of methods any parameters passed to public and protected methods are considered external sources of data from the perspective of the API designer vs the API implementor vs the API user. Since classes are the building blocks of our systems, making them bullet proof will ensure our systems are more robust.
+The principle here is not to trust any external sources of data, and from the perspective of methods any parameters passed to public, and protected methods are considered external sources of data from the perspective of the API designer vs. the API implementor vs. the API user. Since classes are the building blocks of our systems, making them bulletproof will ensure our systems are more robust.
 
-The barricade principle could be implemented at different levels of abstraction. For example, by validating the input parameters of public methods we create a barricade that protects private methods within a class, making it sure for private methods to use any parameters passed to them without having to re-validate them. The barricade could also be implemented in layered applications by means of validating user's input in the controller layer by this guaranteeing that any user's input is sanitized by the time it reaches the service layer.
+The barricade principle could be implemented at different levels of abstraction. For example, by validating the input parameters of public methods we create a barricade that protects private methods within a class, making it sure for private methods to use any parameters passed to them without having to re-validate them. The barricade could also be implemented in layered applications by validating the user's input in the controller layer and guaranteeing that any user's input is sanitized by the time it reaches the service layer.
 
 
 What About Dependency Injection?
 --------------------------------
 
-We can understand a few exceptions to doing input checks on parameters when it comes to arguments passed by injection of dependencies, for example
+We can understand a few exceptions to doing input checks on parameters when it comes to arguments passed by injection of dependencies, for example:
 
 .. code-block:: java
 
@@ -339,7 +343,7 @@ We can understand a few exceptions to doing input checks on parameters when it c
  }
 
 
-In the code above I could understand an omission of a validation on the ``accountRepository`` argument, because we're using Spring to inject a value here and the ``Autowrired`` annotation already requires that a value is passed here or an exception will be thrown during the container initialization. Obviously adding a nullability check wouldn't do any harm here and I would say it is required if the class is expected to be instantiated outside the Spring container for other purposes. However, if it is intended only to be used within the Spring container, I might omit the validation since I know the container would do the corresponding nullability checks here when it starts.
+In the code above I could understand an omission of validation on the ``accountRepository`` argument because we're using Spring to inject a value here, and the ``Autowrired`` annotation already requires that a value is passed here or an exception will be thrown during the container initialization. Obviously adding a nullability check wouldn't do any harm here, and I would say it is required if the class is expected to be instantiated outside the Spring container for other purposes. However, if it is intended only to be used within the Spring container, I might omit the validation since I know the container would do the corresponding nullability checks here when it starts.
 
 However, you may still want to validate that certain injected values are correct, particularly if they come from configuration files that can be wrongfully edited. For example:
 
@@ -373,7 +377,7 @@ The `benefits of immutability <http://www.yegor256.com/2014/06/09/objects-should
 * Avoid identity mutability.
 * Failure atomicity
 
-A place where I believe we can always strive to use immutable objects is in the definition of our `data transfer objects <https://martinfowler.com/eaaCatalog/dataTransferObject.html>`_ (aka DTOs). Since DTOs transport data beyond the boundaries of our applications I daresay there's rarely a case in which we could find it justifiable that we need to modify the state of such objects while using them.
+A place where I believe we can always strive to use immutable objects is in the definition of our `data transfer objects <https://martinfowler.com/eaaCatalog/dataTransferObject.html>`_ (aka DTOs). Since DTOs transport data beyond the boundaries of our applications, I daresay there's rarely a case in which we could find it justifiable that we need to modify the state of such objects while using them.
 
 .. code-block:: java
 
@@ -405,9 +409,9 @@ A place where I believe we can always strive to use immutable objects is in the 
     //...
  }
 
-Note: The annotations ``@JsonCreator``, and ``@JsonProperty`` are part of the Jackson annotations library and they are used by this library to decide how to serialize a Java object into a JSON string and deserialize it back into a Java object. Since the class has no setter methods, the ``@JsonCreator`` annotation states which constructor must be used during deserialization, and ``@JsonProperty`` simply maps JSON property fields to the corresponding arguments of the constructor.
+Note: The annotations ``@JsonCreator``, and ``@JsonProperty`` are part of the Jackson annotations library, and they are used by this library to decide how to serialize a Java object into a JSON string and deserialize it back into a Java object. Since the class has no setter methods, the ``@JsonCreator`` annotation states which constructor must be used during deserialization, and ``@JsonProperty`` simply maps JSON property fields to the corresponding arguments of the constructor.
 
-Another place where immutability can also be easily exploited is in the definition of `Value Objects <https://martinfowler.com/eaaCatalog/valueObject.html>`_. Every business domain has a set of business value objects that are highly reusable. For example, in our banking application example, instead of defining a bank account number as a String, we define a value object to represent it and encapsulate some validation with it. The advantage of value objects is that they pull their own semantic weight at the same time that they properly validate constraints over the encapsulated data. And as a bonus advantage they are highly reusable.
+Another place where immutability can also be easily exploited is in the definition of `Value Objects <https://martinfowler.com/eaaCatalog/valueObject.html>`_. Every business domain has a set of business value objects that are highly reusable. For example, in our banking application example, instead of defining a bank account number as a String, we define a value object to represent it and encapsulate some validation with it. The advantage of value objects is that they pull their own semantic weight at the same time that they properly validate constraints over the encapsulated data. And as a bonus advantage, they are highly reusable.
 
 .. code-block:: java
 
@@ -452,9 +456,9 @@ Another place where immutability can also be easily exploited is in the definiti
     }
  }
 
-Note: the use of the ``@JsonValue`` value annotation is fundamental here. Without it a ``AccountNumber("1-234-567-890")`` would be serialized as ``{number: "1-234-567-890"}`` instead of just ``"1-234-567-890"``. This latter is the way a value object should be serialized though.
+Note: the use of the ``@JsonValue`` value annotation is fundamental here. Without it a ``AccountNumber("1-234-567-890")`` would be serialized as ``{number: "1-234-567-890"}`` instead of just ``"1-234-567-890"``. This latter is the way a value object should be serialized, though.
 
-It is fundamental that value objects have proper implementations of ``equals``, ``hashCode`` and ``toString``. For a review of how to do this the right way I'd recommend a reading of related chapters in `Effective Java`_. Alternatively, to make you life simpler, consider using Apache Commons `EqualsBuilder <https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/builder/EqualsBuilder.html>`_, `HashCodeBuilder <https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/builder/HashCodeBuilder.html>`_ and `ToStringBuilder <https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/builder/ToStringBuilder.html>`_.
+Fundamentally, value objects have proper implementations of ``equals``, ``hashCode`` and ``toString``. For a review of how to do this the right way I'd recommend a reading of related chapters in `Effective Java`_. Alternatively, to make you life simpler, consider using Apache Commons `EqualsBuilder <https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/builder/EqualsBuilder.html>`_, `HashCodeBuilder <https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/builder/HashCodeBuilder.html>`_ and `ToStringBuilder <https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/builder/ToStringBuilder.html>`_.
 
 Use Java 8 Optional When Possible
 ---------------------------------
@@ -484,7 +488,7 @@ However, if we change our repository method to return an ``Optional`` object, it
 
 Quoting Google `Guava's article <https://github.com/google/guava/wiki/UsingAndAvoidingNullExplained#whats-the-point>`_ about the use of optional objects:
 
- Besides the increase in readability that comes from giving null a name, the biggest advantage of Optional is its idiot-proof-ness. It forces you to actively think about the absent case if you want your program to compile at all, since you have to actively unwrap the Optional and address that case.
+ Besides the increase in readability that comes from giving null a name, the biggest advantage of Optional is its idiot-proof-ness. It forces you to actively think about the absent case if you want your program to compile at all since you have to actively unwrap the Optional and address that case.
 
 Beware, though, that using Optional objects improperly is also very easy. The following articles might help you avoid common pitfalls:
 
@@ -496,7 +500,7 @@ Beware, though, that using Optional objects improperly is also very easy. The fo
 Spring Controller Barricade
 ---------------------------
 
-Following the barricade principle mentioned above, in a layered application, we will probably want to place that barricade in the controller layer, which is the place where we receive the user's input for a given a operation. Basically we want to avoid that the user's input goes beyond the controller if it is invalid. If a given transport object reaches the service layer it is because it has been properly validated.
+Following the barricade principle mentioned above, in a layered application, we will probably want to place that barricade in the controller layer, which is the place where we receive the user's input for a given operation. Basically, we want to avoid that the user's input goes beyond the controller if it is invalid. If a given transport object reaches the service layer, it is because it has been properly validated.
 
 Consider the following example:
 
@@ -542,9 +546,9 @@ Consider the following example:
     }
  }
 
-In the code above we're using `Bean Validation`_ to check that the user's DTO contains valid information. Any errors found in the DTO are provided through the ``BindingResult errors`` variable, from where the developer can extract all the details of what went wrong during the validation phase. It is very clear from the code above that if any validation errors are found, we'll never reach the service layer. This is where barrier is located.
+In the code above, we're using `Bean Validation`_ to check that the user's DTO contains valid information. Any errors found in the DTO are provided through the ``BindingResult errors`` variable, from where the developer can extract all the details of what went wrong during the validation phase. It is very clear from the code above that if any validation errors are found, we'll never reach the service layer. This is where barrier is located.
 
-In order to make it easier for the developers to deal with this pattern, in the code above I simply wrap the ``BindingResult`` into a custom ``ValidationException`` which knows how to extract the validation error details.
+To make it easier for the developers to deal with this pattern, in the code above, I simply wrap the ``BindingResult`` into a custom ``ValidationException`` which knows how to extract the validation error details.
 
 .. code-block:: java
 
@@ -610,7 +614,7 @@ There are multiple ways to deal with this, but perhaps the simplest solution is 
     //...
  }
 
-Since we are not using Java RMI as the serialization protocol for our services, we simply cannot send a Java ``Exception`` object back to the client. Instead we must inspect the exception object generated by our application and construct a valid, serializable transport object that we can indeed send back to our clients. For that matter we defined an ``ErrorModel`` transport object and we simply populated it with details from the exception in their corresponding handler. This is a simplified version of what could be done. Perhaps for real production applications we may want to put a few more details in this error model (e.g. status codes, reason codes, etc).
+Since we are not using Java RMI as the serialization protocol for our services, we simply cannot send a Java ``Exception`` object back to the client. Instead, we must inspect the exception object generated by our application and construct a valid, serializable transport object that we can indeed send back to our clients. For that matter, we defined an ``ErrorModel`` transport object, and we simply populated it with details from the exception in their corresponding handler. This is a simplified version of what could be done. Perhaps for real production applications we may want to put a few more details in this error model (e.g., status codes, reason codes, etc.).
 
 .. code-block:: java
 
@@ -643,7 +647,7 @@ Design Contextual Exceptions
 
 The principles here are:
 
-* Good exceptions contains all the relevant details of their context such that any catching blocks can get any necessary details to handle them.
+* Good exceptions contain all the relevant details of their context such that any catching blocks can get any necessary information to handle them.
 * Strive to design exceptions specific to your business operations. Exceptions that already convey business semantics. This is better than just throwing ``RuntimeException`` or any other generic exception.
 * Design your exceptions to log all this meaningful information beautifully.
 
@@ -679,7 +683,7 @@ Consider the following example:
 
 Notice in the example above how we have defined a semantic exception ``InsufficientFundsException`` to represent the exceptional condition of not having sufficient funds in an account when somebody tries to withdraw an invalid amount of money from it. This is a specific business exception.
 
-Also notice how the exception carries all the contextual details of why this is considered an exceptional condition: it encapsulates the account number affected, its current balance and the amount of money we were trying to withdraw when the exception was thrown.
+Also, notice how the exception carries all the contextual details of why this is considered an exceptional condition: it encapsulates the account number affected, its current balance, and the amount of money we were trying to withdraw when the exception was thrown.
 
 Any block catching this exception has sufficient details to determine what happened (since the exception itself is semantically meaningful) and why it happened (since the contextual details encapsulated within the exception object contain that information).
 
@@ -751,23 +755,23 @@ Also, it also worth noticing that the ``getMessage()`` method of ``InsufficientF
 ::
 
  com.training.validation.demo.api.InsufficientFundsException: Insufficient funds in bank account 1-234-567-890: (balance $0.00, withdrawal: $1.00). The account is short $1.00
-	at com.training.validation.demo.domain.SavingsAccount.withdrawMoney(SavingsAccount.java:40) ~[classes/:na]
-	at com.training.validation.demo.impl.SavingsAccountService.lambda$null$0(SavingsAccountService.java:45) ~[classes/:na]
-	at java.util.Optional.map(Optional.java:215) ~[na:1.8.0_141]
-	at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:45) ~[classes/:na]
-	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
-	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
-	at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
-	at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
+    at com.training.validation.demo.domain.SavingsAccount.withdrawMoney(SavingsAccount.java:40) ~[classes/:na]
+    at com.training.validation.demo.impl.SavingsAccountService.lambda$null$0(SavingsAccountService.java:45) ~[classes/:na]
+    at java.util.Optional.map(Optional.java:215) ~[na:1.8.0_141]
+    at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:45) ~[classes/:na]
+    at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
+    at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
+    at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
+    at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
 
 Exception Chaining and Leaky Abstractions
 -----------------------------------------
 
 The principles here are:
 
-* Developers must know very well the abstractions they are using and be aware of any exceptions this abstractions or classes may throw.
+* Developers must know very well the abstractions they are using and be aware of any exceptions these abstractions or classes may throw.
 * Exceptions from your libraries should not be allowed to escape from within your own abstractions.
-* Make sure to use exception chaining in order to avoid that important contextual details are lost when you wrap low level exceptions into higher level exceptions.
+* Make sure to use exception chaining to avoid that important contextual details are lost when you wrap low-level exceptions into higher-level exceptions.
 
 Effective Java explains it very well:
 
@@ -810,26 +814,26 @@ Consider the following example from our ``SavingsAccountService``:
     }
  }
 
-In the example above we recognize that it is possible that our data access layer might fail in recovering the details of our savings account. There is no certainty of how this might fail, however we know that the Spring framework has a root exception for all data access exceptions: ``DataAccessException``. In this case we catch any possible data access failures and wrap them into a ``SavingsAccountException`` to avoid that the underlying abstraction exceptions escape our own abstraction.
+In the example above, we recognize that our data access layer might fail in recovering the details of our savings account. There is no certainty of how this might fail, however, we know that the Spring framework has a root exception for all data access exceptions: ``DataAccessException``. In this case, we catch any possible data access failures and wrap them into a ``SavingsAccountException`` to avoid that the underlying abstraction exceptions escape our own abstraction.
 
 It is worth noticing how the ``SavingsAccountException`` not only provides contextual details, but also wraps the underlying exception. This exception chaining is a fundamental piece of information that is included in the stack trace when the exception is logged. Without these details we could only know that our system failed, but not why:
 
 ::
 
  com.training.validation.demo.api.SavingsAccountException: Failure to execute operation on account '1-234-567-890'
-	at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:51) ~[classes/:na]
-	at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
-	at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
-	at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
-	at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
-	at java.lang.Thread.run(Thread.java:748) [na:1.8.0_141]
-	... 38 common frames omitted
+    at com.training.validation.demo.impl.SavingsAccountService.lambda$withdrawMoney$2(SavingsAccountService.java:51) ~[classes/:na]
+    at org.springframework.retry.support.RetryTemplate.doExecute(RetryTemplate.java:287) ~[spring-retry-1.2.1.RELEASE.jar:na]
+    at org.springframework.retry.support.RetryTemplate.execute(RetryTemplate.java:164) ~[spring-retry-1.2.1.RELEASE.jar:na]
+    at com.training.validation.demo.impl.SavingsAccountService.withdrawMoney(SavingsAccountService.java:40) ~[classes/:na]
+    at com.training.validation.demo.controllers.SavingsAccountController.onMoneyWithdrawal(SavingsAccountController.java:35) ~[classes/:na]
+    at java.lang.Thread.run(Thread.java:748) [na:1.8.0_141]
+    ... 38 common frames omitted
  Caused by: org.springframework.dao.QueryTimeoutException: Database query timed out!
-	at com.training.validation.demo.impl.SavingsAccountRepository.findAccountByNumber(SavingsAccountRepository.java:31) ~[classes/:na]
-	at com.training.validation.demo.impl.SavingsAccountRepository$$FastClassBySpringCGLIB$$d53e9d8f.invoke(<generated>) ~[classes/:na]
-	... 58 common frames omitted
+    at com.training.validation.demo.impl.SavingsAccountRepository.findAccountByNumber(SavingsAccountRepository.java:31) ~[classes/:na]
+    at com.training.validation.demo.impl.SavingsAccountRepository$$FastClassBySpringCGLIB$$d53e9d8f.invoke(<generated>) ~[classes/:na]
+    ... 58 common frames omitted
 
-The ``SavingsAccountException`` is a somewhat generic exception for our savings account services. Its semantic power is a bit limited though. For example, it tells us there was a problem with a savings account, but it does not explicitly tell us what exactly. For that matter we may consider adding an additional message or weight the possibility of defining a more contextual exception (e.g. ``WithdrawMoneyException``).
+The ``SavingsAccountException`` is a somewhat generic exception for our savings account services. Its semantic power is a bit limited, though. For example, it tells us there was a problem with a savings account, but it does not explicitly tell us what exactly. For that matter, we may consider adding an additional message or weight the possibility of defining a more contextual exception (e.g., ``WithdrawMoneyException``).
 Given its generic nature, it could be used as the root of our hierarchy of exceptions for our savings account services.
 
 .. code-block:: java
@@ -867,47 +871,47 @@ Given its generic nature, it could be used as the root of our hierarchy of excep
     }
  }
 
-Checked vs Unchecked Exceptions
+Checked vs. Unchecked Exceptions
 -------------------------------
 
-Java is one of those few languages that support this feature of checked exceptions and there's a lot of controversy on whether this was a good idea or not. Consider reading the following articles:
+Java is one of those few languages that support this feature of checked exceptions, and there's a lot of controversy on whether this was a good idea or not. Consider reading the following articles:
 
 * `Trouble with Checked Exceptions`_
 * `The Exceptions Debate`_
 * `Does Java Need Checked Exceptions?`_
 
-Even Java Specifications tend to get divided in this arena, for example JDBC API uses the checked exception ``SQLException`` in most of their interface methods. However, the JPA specification, which is also about data access, uses ``JPAException`` for everything, and this one is an unchecked exception.
+Even Java Specifications tend to get divided in this arena, for example, JDBC API uses the checked exception ``SQLException`` in most of their interface methods. However, the JPA specification, which is also about data access, uses ``JPAException`` for everything, and this one is an unchecked exception.
 
-In `Effective Java`_ we read the following advise about checked exceptions:
+In `Effective Java`_ we read the following advice about checked exceptions:
 
- The cardinal rule in deciding whether to use a checked or an unchecked exception is this: use checked exceptions for conditions from which the caller can reasonably be expected to recover. By throwing a checked exception, you force the caller to handle the exception in a catch clause or to propagate it outward. Each checked exception that a method is declared to throw is therefore a potent indication to the API user that the associated condition is a possible outcome of invoking the method.
+ The cardinal rule in deciding whether to use a checked or an unchecked exception is this: use checked exceptions for conditions from which the caller can reasonably be expected to recover. By throwing a checked exception, you force the caller to handle the exception in a catch clause or to propagate it outward. Each checked exception that a method is declared to throw is, therefore, a potent indication to the API user that the associated condition is a possible outcome of invoking the method.
 
 Regardless of the opinion we have on checked vs unchecked exceptions the main issue you definitively will want to consider with checked exceptions is that they don't play well with Java 8 functional interfaces, making them really hard to use with any methods that throw them (e.g. in fluent code of Stream API or reactive programming libraries like `RxJava <https://github.com/ReactiveX/RxJava>`_ or `Reactor <https://projectreactor.io>`_).
 
-The migration of applications using checked exceptions in Java 6 o 7 into Java 8 applications using lambdas, method references and stream API could easily become a nightmare of super verbosity.
+The migration of applications using checked exceptions in Java 6 o 7 into Java 8 applications using lambdas, method references, and stream API could quickly become a nightmare of super verbosity.
 
 Since checked exceptions are part of the method signature, methods throwing checked exceptions are incompatible with most of the Java 8 functional interfaces or other with third-party API functional interfaces.
 
 If you are interested in knowing more, in the past I had answered a question in Stackoverflow explaining this and `several other shortcomings in the Java type system <https://stackoverflow.com/a/22919112/697630>`_ that would make developers lives much harder if they had to deal with checked exceptions every time they need to use them in lambda expression.
 
-The principle here is avoid checked exceptions and favor unchecked exceptions when possible.
+The principle here is to avoid checked exceptions and favor unchecked exceptions when possible.
 
 Retryability: Transient vs Persistent Exceptions
 ------------------------------------------------
 
 Some exceptions represent recoverable conditions (e.g. a ``QueryTimeoutException``) and some don't (e.g. ``DataViolationException``).
 
-When an exception condition is temporal, and we believe that if we try again we could probably succeed, we say that such exception is transient. On the other hand, when the exceptional condition is permanent then we say such exception is persistent.
+When an exception condition is temporal, and we believe that if we try again, we could probably succeed, we say that such exception is transient. On the other hand, when the exceptional condition is permanent, then we say such exception is persistent.
 
 The major point here is that transient exceptions are good candidates for retry blocks, whereas persistent exceptions need to be handled differently, typically requiring some human intervention.
 
 This knowledge of the 'transientness' of exceptions becomes even more relevant in distributed systems where an exception can be serialized somehow and sent beyond the boundaries of the system. For example, if the client API receives an error reporting that a given HTTP endpoint failed to execute, how can the client know if the operation should be retried or not? It would be pointless to retry if the condition for which it failed was permanent.
 
-When we design an exception hierarchy based on a good understanding of the business domain and the classical system integration problems, then the information of wether an exceptions represents a recoverable condition or not can be crucial to design good behaving clients.
+When we design an exception hierarchy based on a good understanding of the business domain and the classical system integration problems, then the information of whether an exception represents a recoverable condition or not can be crucial to design right behaving clients.
 
-There are several strategies we could follow to indicate an exceptions is transient or not within our APIs:
+There are several strategies we could follow to indicate an exception is transient or not within our APIs:
 
-* We could document that a given exception is transient (e.g. JavaDocs).
+* We could document that a given exception is transient (e.g., JavaDocs).
 * We could define a ``@TransientException`` annotation and add it to the exceptions.
 * We could define a marker interface or inherit from a ``TransientServiceException`` class.
 
@@ -941,11 +945,11 @@ This plays rather well with the `Spring Retry`_ Framework. It becomes particular
      });
   }
 
-In the code above, if the DAO fails to retrieve a record from the database due to e.g. a query timeout, Spring would wrap that failure into a `QueryTimeoutException`_ which is also a `TransientDataAccessException`_ and our ``RetryTemplate`` would retry that operation up to 3 times before it surrenders.
+In the code above, if the DAO fails to retrieve a record from the database due to e.g., a query timeout, Spring would wrap that failure into a `QueryTimeoutException`_ which is also a `TransientDataAccessException`_ and our ``RetryTemplate`` would retry that operation up to 3 times before it surrenders.
 
 **How about transient error models?**
 
-When we send error models back to our clients we can also take advantage of knowing if a given exception is transient or not. This information let us tell the clients that they could retry the operation after certain back off period.
+When we send error models back to our clients, we can also take advantage of knowing if a given exception is transient or not. This information let us tell the clients that they could retry the operation after a certain back off period.
 
 .. code-block:: java
 
@@ -979,9 +983,9 @@ When we send error models back to our clients we can also take advantage of know
 
  }
 
-The code above uses a ``BinaryExceptionClassifier``, which is part of the `Spring Retry`_ library, to determine if a given exception contains any transient exceptions in their causes and if so, categorizes that exception as transient. This predicate is used to determine what type of HTTP status code we send back to the client. If the exception is transient we send a ``503 Service Unavailable`` and provide a header ``Retry-After: 5000`` with the details of the backoff policy.
+The code above uses a ``BinaryExceptionClassifier``, which is part of the `Spring Retry`_ library, to determine if a given exception contains any transient exceptions in their causes and, if so, categorizes that exception as transient. This predicate is used to determine what type of HTTP status code we send back to the client. If the exception is transient, we send a ``503 Service Unavailable`` and provide a header ``Retry-After: 5000`` with the details of the backoff policy.
 
-Using this information, clients can decide whether it make sense to retry a given web service invocation and exactly how long they need to wait before retrying.
+Using this information, clients can decide whether it makes sense to retry a given web service invocation and exactly how long they need to wait before retrying.
 
 Logging with Monitoring in Mind
 -------------------------------
@@ -990,9 +994,9 @@ All these efforts we have put in writing defensive code and designing and implem
 
 Design your applications with monitoring in mind.
 
-And the most fundamental tool we have at our disposal is logging. We must strive to log everything relevant that occurs in our application and that could help us troubleshoot any issues when the application is failing in production and we cannot easily debug the code step by step.
+And the most fundamental tool we have at our disposal is logging. We must strive to log everything relevant that occurs in our application, and that could help us troubleshoot any issues when the application is failing in production, and we cannot easily debug the code step by step.
 
-* Log any errors that occur with their full stack traces. Just be sensitive that not all errors are critical (e.g. transient exceptions might be logged as warnings).
+* Log any errors that occur with their full stack traces. Just be sensitive that not all errors are critical (e.g., transient exceptions might be logged as warnings).
 * Make sure your logs always contain contextual details, particularly strive for keeping a correlation id that helps you keep track of related long entries (e.g. all entries affecting the same bank account should have such bank account number logged).
 * You may want to log when successful operations finished successfully.
 
@@ -1040,7 +1044,7 @@ Notice that in all logging examples from above, the account number is always pre
 Bean Validation Drawbacks
 -------------------------
 
-When we use `Bean Validation`_ there is this expectation that we can create an object that may be initially defined in an inconsistent or invalid state and then later we run a validation API on it to discover whether the object violates any constraints.
+When we use `Bean Validation`_ there is this expectation that we can create an object that may be initially defined in an inconsistent or invalid state, and then later, we run a validation API on it to discover whether the object violates any constraints.
 
 .. code-block:: java
 
@@ -1068,7 +1072,7 @@ When we use `Bean Validation`_ there is this expectation that we can create an o
     }
  }
 
-As you can see, just by invoking the ``new SaveMoney()`` constructor we end up with an instance of this object in an completely invalid state (i.e. account number is null, and amount is 0.0). It setter methods are not better, we could also use them to put the object in an invalid state:
+As you can see, just by invoking the ``new SaveMoney()`` constructor we end up with an instance of this object in a completely invalid state (i.e. account number is null, and the amount is 0.0). It setter methods are not better; we could also use them to put the object in an invalid state:
 
 .. code-block:: java
 
@@ -1088,7 +1092,7 @@ As you can see, just by invoking the ``new SaveMoney()`` constructor we end up w
 
 For me, this possibility of having an object in an inconsistent state is a major design flaw. My point is that if the object was properly designed, it should defend itself from getting into an invalid state since its inception.
 
-We could improve things a little bit if we made a our setter methods to also do validations:
+We could improve things a little bit if we made our setter methods also to do validations:
 
 .. code-block:: java
 
@@ -1104,7 +1108,7 @@ We could improve things a little bit if we made a our setter methods to also do 
     this.amount = amount;
  }
 
-However, if we just do this, we should also include a constructor, otherwise the object may still be built in an invalid state:
+However, if we just do this, we should also include a constructor, otherwise, the object may still be built in an invalid state:
 
 .. code-block:: java
 
@@ -1146,7 +1150,7 @@ However, if we just do this, we should also include a constructor, otherwise the
 
 At this point, the object is self-defensive. It cannot be built in an inconsistent state. But once you realize that this is the case, then **what do we need bean validation for?**. If the object guarantees it is always in a consistent state there is no need to validate it any further.
 
-Even more, in a case like this you can probably get rid of the setter methods and make your object entirely immutable, and just survive with the validations in the constructor, which make things even simpler: no bean validation whatsoever.
+Even more, in a case like this you can probably get rid of the setter methods and make your object entirely immutable and just survive with the validations in the constructor, which make things even simpler: no bean validation whatsoever.
 
 .. code-block:: java
 
@@ -1179,7 +1183,7 @@ Even more, in a case like this you can probably get rid of the setter methods an
 
 **How do we build the controller barrier then?**
 
-The thing is that if an API user sends a JSON object that is invalid, the deserialization of that object will fail when invoking our ``SaveMoney`` constructor. Consider the following example:
+The thing is that if an API user sends an invalid JSON object, the deserialization of that object will fail when invoking our ``SaveMoney`` constructor. Consider the following example:
 
 .. code-block:: java
 
@@ -1195,19 +1199,19 @@ Our ``mapper.readValue`` method above fails to deserialize our JSON object becau
 
  Exception in thread "main" com.fasterxml.jackson.databind.JsonMappingException: Can not construct instance of com.training.validation.demo.transports.SaveMoney, problem: The account number must not be null
   at [Source: {"account": null, "amount": -1.0}; line: 1, column: 33]
-	at com.fasterxml.jackson.databind.JsonMappingException.from(JsonMappingException.java:277)
+    at com.fasterxml.jackson.databind.JsonMappingException.from(JsonMappingException.java:277)
  Caused by: java.lang.NullPointerException: The account number must not be null
-	at java.util.Objects.requireNonNull(Objects.java:228)
-	at com.training.validation.demo.transports.SaveMoney.<init>(SaveMoney.java:26)
-	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
-	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
-	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
-	at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
-	at com.fasterxml.jackson.databind.introspect.AnnotatedConstructor.call(AnnotatedConstructor.java:124)
-	at com.fasterxml.jackson.databind.deser.std.StdValueInstantiator.createFromObjectWith(StdValueInstantiator.java:274)
-	... 14 more
+    at java.util.Objects.requireNonNull(Objects.java:228)
+    at com.training.validation.demo.transports.SaveMoney.<init>(SaveMoney.java:26)
+    at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+    at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+    at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+    at java.lang.reflect.Constructor.newInstance(Constructor.java:423)
+    at com.fasterxml.jackson.databind.introspect.AnnotatedConstructor.call(AnnotatedConstructor.java:124)
+    at com.fasterxml.jackson.databind.deser.std.StdValueInstantiator.createFromObjectWith(StdValueInstantiator.java:274)
+    ... 14 more
 
-So, the first change we must do is to change the way we build our validation barrier in the controller. We no longer need to use bean validation or ``BindingResult`` objects since our immutable objects already guarantees that if it reaches the controller layer then it is completely valid. If it is invalid, it will fail in the deserialization phase, though.
+So, the first change we must do is to change the way we build our validation barrier in the controller. We no longer need to use bean validation or ``BindingResult`` objects since our immutable objects already guarantee that if it reaches the controller layer, then it is completely valid. If it is invalid, it will fail in the deserialization phase, though.
 
 .. code-block:: java
 
@@ -1250,14 +1254,14 @@ To deal with the possibility of a deserialization failure of our now self-defens
 
 Notice how our ``ExceptionHandlers`` class now extends ``ResponseEntityExceptionHandler`` and we override the ``handleHttpMessageNotReadable`` method for the particular case of a ``HttpMessageNotReadableException``, which is the exception Spring throws when it fails to deserialize our JSON object.
 
-In the handler we go over the tree of causes of the exception to determine if the original cause was ``NullPointerException`` or a ``IllegalArgumentException`` which are the two exceptions we use to validate our DTOs. If so, we handle the case by sending a 400 Bad Request with the corresponding ``ErrorModel`` object containing the same details given in the exception message. The net effect is similar to what bean validation would have sent.
+In the handler, we go over the tree of causes of the exception to determine if the original cause was ``NullPointerException`` or a ``IllegalArgumentException`` which are the two exceptions we use to validate our DTOs. If so, we handle the case by sending a 400 Bad Request with the corresponding ``ErrorModel`` object containing the same details given in the exception message. The net effect is similar to what bean validation would have sent.
 
-In general I tend to prefer this approach better than using bean validation. Its major advantages are that the objects are always consistent and valid and I can exploit immutability. It's main disadvantage (compared to bean validation) is that it only reports one constraint at the time.
+In general, I tend to prefer this approach better than using bean validation. Its major advantages are that the objects are always consistent and valid, and I can exploit immutability. Its main disadvantage (compared to bean validation) is that it only reports one constraint at the time.
 
 Testing Components
 ------------------
 
-In the following section I present some ideas of different aspects that are worth testing for every type of component.
+In the following section, I present some ideas of different aspects that are worth testing for every type of component.
 
 Transport and Value Objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1327,7 +1331,7 @@ For **immutable transport objects** and **value object**, I recommend **at least
 The Service Layer
 ^^^^^^^^^^^^^^^^^
 
-For your **service layer**, you may want to use a library like Mockito to mock your data access layer and just focus on what should happen in the service layer. Make sure to test not only valid scenarios, but also invalid scenarios and attempts to violate preconditions.
+For your **service layer**, you may want to use a library like Mockito to mock your data access layer and just focus on what should happen in the service layer. Make sure to test not only valid scenarios but also invalid scenarios and attempts to violate preconditions.
 
 .. code-block:: java
 
@@ -1466,7 +1470,7 @@ For your **service layer**, you may want to use a library like Mockito to mock y
 The Controller Layer
 ^^^^^^^^^^^^^^^^^^^^
 
-The **controller layer** represents a contract between our application and our clients and we'd do well to test that those contracts are properly satisfied. The Spring Framework already provides very useful testing APIs that we can exploit for these purposes.
+The **controller layer** represents a contract between our application and our clients, and we'd do well to test that those contracts are properly satisfied. The Spring Framework already provides very useful testing APIs that we can exploit for these purposes.
 
 .. code-block:: java
 
@@ -1600,10 +1604,6 @@ The **controller layer** represents a contract between our application and our c
     }
 
  }
-
-
-
-
 
 
 Further Reading
