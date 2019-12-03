@@ -1624,7 +1624,6 @@ Further Reading
 
 .. _Code Complete: https://www.amazon.com/Code-Complete-Practical-Handbook-Construction/dp/0735619670
 .. _Effective Java: https://www.amazon.com/Effective-Java-3rd-Joshua-Bloch/dp/0134685997/
-.. _Design By Contract: http://wiki.c2.com/?DesignByContract
 .. _Objects Should Be Immutable: http://www.yegor256.com/2014/06/09/objects-should-be-immutable.html
 .. _Data Transfer Object: https://martinfowler.com/eaaCatalog/dataTransferObject.html
 .. _Bean Validation: http://beanvalidation.org
