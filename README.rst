@@ -39,7 +39,7 @@ Balancing these two principles is vital while designing applications and coding 
 Design By Contract
 ------------------
 
-The best place to start to understand this idea is by reading Bertran Meyer's article on `Design by Contract <http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf>`_.
+Bertran Meyer published a great article back in 1992 on the idea of `Design by Contract <http://se.inf.ethz.ch/~meyer/publications/computer/contract.pdf>`_.
 
 Functions or methods are the fundamental building blocks of any software application, and we should strive to `design them by contract <http://wiki.c2.com/?DesignByContract>`_. This implies that a method must guarantee all its preconditions. During the execution of the code must ensure its invariants are held, and finally, when finished, it must guarantee a number of postconditions. Failure to do any of these should be signaled immediately by throwing an exception.
 
