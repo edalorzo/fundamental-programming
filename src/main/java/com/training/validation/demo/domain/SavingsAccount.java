@@ -3,6 +3,7 @@ package com.training.validation.demo.domain;
 import com.training.validation.demo.api.BankAccount;
 import com.training.validation.demo.api.InsufficientFundsException;
 import com.training.validation.demo.common.AccountNumber;
+import com.training.validation.demo.transports.AccountBalance;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +26,17 @@ public class SavingsAccount implements BankAccount {
      * @param accountNumber - the account number.
      * @throws NullPointerException if the {@code accountNumber} is null.
      */
-    public SavingsAccount(AccountNumber accountNumber) {
+    public SavingsAccount(AccountNumber accountNumber, double balance) {
         Objects.requireNonNull(accountNumber, "The account number must not be null");
+        if(balance < 0) {
+            throw new IllegalArgumentException("The balance must be > 0: " + balance);
+        }
         this.accountNumber = accountNumber;
-        this.balance = 100.0;
+        this.balance = balance;
     }
 
     @Override
-    public double withdrawMoney(double amount) {
+    public AccountBalance withdrawMoney(double amount) {
         if(amount <= 0)
             throw new IllegalArgumentException("The amount must be >= 0: " + amount);
 
@@ -43,18 +47,23 @@ public class SavingsAccount implements BankAccount {
 
         logger.info("Withdrew ${} from account {} for a final balance of ${}", amount, accountNumber, balance);
 
-        return balance;
+        return new AccountBalance(accountNumber, balance);
     }
 
     @Override
-    public double saveMoney(double amount) {
+    public AccountBalance saveMoney(double amount) {
         if(amount <= 0)
             throw new IllegalArgumentException("The amount must be >= 0: " + amount);
 
         balance += amount;
         logger.info("Saved ${} from account {} for a final balance of ${}", amount, accountNumber, balance);
 
-        return balance;
+        return new AccountBalance(accountNumber,balance);
+    }
+
+    @Override
+    public AccountBalance getCurrentBalance() {
+        return new AccountBalance(accountNumber, balance);
     }
 
 

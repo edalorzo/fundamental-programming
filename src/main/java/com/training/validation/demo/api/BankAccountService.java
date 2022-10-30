@@ -1,5 +1,7 @@
 package com.training.validation.demo.api;
 
+import com.training.validation.demo.common.AccountNumber;
+import com.training.validation.demo.transports.AccountBalance;
 import com.training.validation.demo.transports.SaveMoney;
 import com.training.validation.demo.transports.WithdrawMoney;
 
@@ -13,15 +15,24 @@ public interface BankAccountService {
      * @throws InsufficientFundsException if the account does not have enough balance for withdrawal.
      * @throws BankAccountNotFoundException if the provided account does not exist.
      */
-    double withdrawMoney(WithdrawMoney withdrawal);
+    AccountBalance withdrawMoney(WithdrawMoney withdrawal);
 
     /**
      * Saves the provided amount of money into the given bank account.
      *
      * @param savings - the savings request details.
-     * @return the balance of the account after withdrawal.
+     * @return the balance of the account after deposit.
      * @throws BankAccountNotFoundException if the provided account does not exist.
      */
-    double saveMoney(SaveMoney savings);
+    AccountBalance saveMoney(SaveMoney savings);
+
+    /**
+     * Retrieves the account current balance.
+     *
+     * @param account the account number.
+     * @return the account's current balance.
+     * @throws BankAccountNotFoundException if the provided account does not exist.
+     */
+    AccountBalance getCurrentBalance(AccountNumber account);
 
 }

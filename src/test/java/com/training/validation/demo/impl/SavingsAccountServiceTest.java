@@ -6,6 +6,7 @@ import com.training.validation.demo.api.InsufficientFundsException;
 import com.training.validation.demo.api.SavingsAccountException;
 import com.training.validation.demo.common.AccountNumber;
 import com.training.validation.demo.domain.SavingsAccount;
+import com.training.validation.demo.transports.AccountBalance;
 import com.training.validation.demo.transports.SaveMoney;
 import com.training.validation.demo.transports.WithdrawMoney;
 import org.junit.Test;
@@ -36,15 +37,15 @@ public class SavingsAccountServiceTest {
     @Test
     public void testSuccessfulMoneySaving() {
         when(bankAccountRepository.findAccountByNumber(accountNumber))
-                .thenReturn(Optional.of(new SavingsAccount(accountNumber)));
+                .thenReturn(Optional.of(new SavingsAccount(accountNumber, 0)));
 
         SaveMoney savings = new SaveMoney(new AccountNumber("1-234-567-890"), 100);
-        double balance = savingsAccountService.saveMoney(savings);
+        AccountBalance balance = savingsAccountService.saveMoney(savings);
 
         verify(bankAccountRepository, times(1)).findAccountByNumber(eq(accountNumber));
         verifyNoMoreInteractions(bankAccountRepository);
 
-        assertThat(balance).isEqualTo(100.0);
+        assertThat(balance).isEqualTo(new AccountBalance(accountNumber, 100.0));
     }
 
     @Test(expected = BankAccountNotFoundException.class)
@@ -69,25 +70,25 @@ public class SavingsAccountServiceTest {
     public void testSuccessfulMoneyWithdrawal() {
 
         when(bankAccountRepository.findAccountByNumber(accountNumber))
-                .thenReturn(Optional.of(new SavingsAccount(accountNumber)));
+                .thenReturn(Optional.of(new SavingsAccount(accountNumber,0)));
 
         SaveMoney savings = new SaveMoney(new AccountNumber("1-234-567-890"), 100);
         savingsAccountService.saveMoney(savings);
 
         WithdrawMoney withdraw = new WithdrawMoney(new AccountNumber("1-234-567-890"), 1);
-        double balance = savingsAccountService.withdrawMoney(withdraw);
+        AccountBalance balance = savingsAccountService.withdrawMoney(withdraw);
 
         verify(bankAccountRepository, times(2)).findAccountByNumber(eq(accountNumber));
         verifyNoMoreInteractions(bankAccountRepository);
 
-        assertThat(balance).isEqualTo(99.0);
+        assertThat(balance).isEqualTo(new AccountBalance(accountNumber,99.0));
     }
 
     @Test(expected = InsufficientFundsException.class)
     public void testWithdrawalFailureDueToInsufficientFunds() {
 
         when(bankAccountRepository.findAccountByNumber(accountNumber))
-                .thenReturn(Optional.of(new SavingsAccount(accountNumber)));
+                .thenReturn(Optional.of(new SavingsAccount(accountNumber, 0)));
 
         WithdrawMoney withdraw = new WithdrawMoney(new AccountNumber("1-234-567-890"), 100);
         try {
@@ -130,7 +131,7 @@ public class SavingsAccountServiceTest {
             savingsAccountService.withdrawMoney(withdraw);
         }
         catch (Exception e) {
-            verify(bankAccountRepository, times(1)).findAccountByNumber(eq(accountNumber));
+            verify(bankAccountRepository, times(3)).findAccountByNumber(eq(accountNumber));
             verifyNoMoreInteractions(bankAccountRepository);
             throw e;
         }

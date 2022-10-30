@@ -1,6 +1,9 @@
 package com.training.validation.demo.impl;
 
 import com.training.validation.demo.api.*;
+import com.training.validation.demo.common.AccountNumber;
+import com.training.validation.demo.domain.SavingsAccount;
+import com.training.validation.demo.transports.AccountBalance;
 import com.training.validation.demo.transports.SaveMoney;
 import com.training.validation.demo.transports.WithdrawMoney;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +28,7 @@ public class SavingsAccountService implements BankAccountService {
     }
 
     @Override
-    public double withdrawMoney(WithdrawMoney withdrawal) throws InsufficientFundsException {
+    public AccountBalance withdrawMoney(WithdrawMoney withdrawal) throws InsufficientFundsException {
         //notice I still check nullability of the parameter, but not its contents
         //a programmer may still have made the error of passing a null value
 
@@ -56,7 +59,7 @@ public class SavingsAccountService implements BankAccountService {
     }
 
     @Override
-    public double saveMoney(SaveMoney savings) {
+    public AccountBalance saveMoney(SaveMoney savings) {
 
         Objects.requireNonNull(savings, "The savings request must not be null");
 
@@ -69,6 +72,23 @@ public class SavingsAccountService implements BankAccountService {
             //avoid leaky abstractions and wrap lower level abstraction exceptions into your own exception
             //make sure you keep the exception chain intact such that you don't lose sight of the root cause
             throw new SavingsAccountException(savings.getAccountNumber(), cause);
+        }
+    }
+
+    @Override
+    public AccountBalance getCurrentBalance(AccountNumber accountNumber) {
+
+        Objects.requireNonNull(accountNumber, "The savings request must not be null");
+
+        try {
+            return accountRepository.findAccountByNumber(accountNumber)
+                    .map(SavingsAccount::getCurrentBalance)
+                    .orElseThrow(() -> new BankAccountNotFoundException(accountNumber));
+        }
+        catch (DataAccessException cause) {
+            //avoid leaky abstractions and wrap lower level abstraction exceptions into your own exception
+            //make sure you keep the exception chain intact such that you don't lose sight of the root cause
+            throw new SavingsAccountException(accountNumber, cause);
         }
     }
 }

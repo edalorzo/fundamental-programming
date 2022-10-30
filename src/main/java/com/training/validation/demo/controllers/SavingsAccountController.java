@@ -1,18 +1,13 @@
 package com.training.validation.demo.controllers;
 
 import com.training.validation.demo.api.BankAccountService;
-import com.training.validation.demo.impl.SavingsAccountService;
+import com.training.validation.demo.common.AccountNumber;
 import com.training.validation.demo.transports.AccountBalance;
 import com.training.validation.demo.transports.SaveMoney;
 import com.training.validation.demo.transports.WithdrawMoney;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/accounts")
@@ -26,26 +21,24 @@ public class SavingsAccountController {
     }
 
     @PutMapping("withdraw")
-    public ResponseEntity<AccountBalance> onMoneyWithdrawal(@RequestBody @Validated WithdrawMoney withdrawal, BindingResult errors) {
-        if (errors.hasErrors()) {
-            throw new ValidationException(errors);
-        }
+    public ResponseEntity<AccountBalance> onMoneyWithdrawal(@RequestBody WithdrawMoney withdrawal) {
 
         //any exception thrown here will be handled in the ExceptionHandlers class
-        double balance = accountService.withdrawMoney(withdrawal);
-        return ResponseEntity.ok(new AccountBalance(
-                withdrawal.getAccountNumber(), balance));
+        AccountBalance balance = accountService.withdrawMoney(withdrawal);
+        return ResponseEntity.ok(balance);
     }
 
     @PutMapping("save")
-    public ResponseEntity<AccountBalance> onMoneySaving(@RequestBody @Validated SaveMoney savings, BindingResult errors) {
-        if (errors.hasErrors()) {
-            throw new ValidationException(errors);
-        }
+    public ResponseEntity<AccountBalance> onMoneySaving(@RequestBody SaveMoney savings) {
 
         //any exception thrown here will be handled in the ExceptionHandlers class
-        double balance = accountService.saveMoney(savings);
-        return ResponseEntity.ok(new AccountBalance(
-                savings.getAccountNumber(), balance));
+        AccountBalance balance = accountService.saveMoney(savings);
+        return ResponseEntity.ok(balance);
+    }
+
+    @GetMapping("/{accountNumber}")
+    public ResponseEntity<AccountBalance> getBalance(@PathVariable("accountNumber") AccountNumber accountNumber) {
+        AccountBalance balance = accountService.getCurrentBalance(accountNumber);
+        return ResponseEntity.ok(balance);
     }
 }

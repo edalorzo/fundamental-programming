@@ -3,6 +3,7 @@ package com.training.validation.demo.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.training.validation.demo.api.BankAccountService;
 import com.training.validation.demo.common.AccountNumber;
+import com.training.validation.demo.transports.AccountBalance;
 import com.training.validation.demo.transports.SaveMoney;
 import com.training.validation.demo.transports.WithdrawMoney;
 import org.junit.Test;
@@ -41,7 +42,7 @@ public class SavingsAccountControllerTest {
         SaveMoney savings = new SaveMoney(accountNumber, 100.0);
 
         given(bankAccountService.saveMoney(savings))
-                .willReturn(savings.getAmount());
+                .willReturn(new AccountBalance(accountNumber, savings.getAmount()));
 
         RequestBuilder request = put("/accounts/save")
                 .accept(APPLICATION_JSON)
@@ -96,7 +97,7 @@ public class SavingsAccountControllerTest {
         WithdrawMoney withdrawal = new WithdrawMoney(accountNumber, 100.0);
 
         given(bankAccountService.withdrawMoney(withdrawal))
-                .willReturn(10.0);
+                .willReturn(new AccountBalance(accountNumber, 10.0));
 
         RequestBuilder request = put("/accounts/withdraw")
                 .accept(APPLICATION_JSON)
